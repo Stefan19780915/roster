@@ -1,9 +1,15 @@
+ ///////////////////// STORE CLASS //////////////////////////
+
 class Store {
-    static getRosters() {
-      let rosters;
+	static roster = {};
+    static rosters = [];
+	
+	static getRosters() {
+    
       if (localStorage.getItem("rosters") == null) {
-        let roster = new Roster(
-          "",
+		  
+         Store.roster = new Roster(
+          "Empty",
           "00:00",
           "00:00",
           "00:00",
@@ -15,16 +21,16 @@ class Store {
           [],
           []
         );
-        rosters = [roster];
+        Store.rosters = [Store.roster];
       } else {
-        rosters = JSON.parse(localStorage.getItem("rosters"));
+        Store.rosters = JSON.parse(localStorage.getItem("rosters"));
       }
-      return rosters;
+      return Store.rosters;
     }
   
-    static addRoster(roster) {
+    static addRoster(newRoster) {
       const rosters = Store.getRosters();
-      rosters.push("roster");
+      rosters.push(newRoster);
       localStorage.setItem("rosters", JSON.stringify(rosters));
     }
   
@@ -38,6 +44,11 @@ class Store {
       localStorage.setItems("rosters", JSON.stringify(rosters));
     }
   }
+
+  //////////////////END OF CLASS STORE //////////////////////
+
+
+  ////////////// CLASS ROSTER //////////////////////////////
   
   class Roster {
     constructor(
@@ -65,6 +76,9 @@ class Store {
         (this.shiftsClose = shiftsClose),
         (this.labourPerHour = labourPerHour);
     }
+	setRosterName(name){
+		this.name = name;
+	}
     setTimePreSelect(time) {
       this.timePreSelect = time;
     }
@@ -172,22 +186,27 @@ class Store {
     }
     updateLabourPerHour(arr){
       this.setLabourPerHour(this.countHeadOpen);
-      console.log(arr);
+      //console.log(arr);
       this.shiftsOpen.forEach((shift)=>{
-        console.log(shift.from, shift.to);
+        //console.log(shift.from, shift.to);
         let start = arr.indexOf(shift.from);
         let end = arr.indexOf(shift.to);
-        console.log(start, end);
+        //console.log(start, end);
         this.labourPerHour.forEach((hour, i)=>{
             i >= start && i < end ? this.labourPerHour[i] = hour += 0.5 : 0;
         });
       });
       //console.log(this.labourPerHour);
     }
+	
     getLabourPerHour(){
       return this.labourPerHour;
     }
   }
+  
+  //////////////// END OF CLASS ROSTER /////////////////////
+  
+  //////////////// CLASS SHIFT /////////////////////////////
   
   class Shift {
     constructor(id, employee, position, from, to, pause, hours) {
@@ -201,11 +220,15 @@ class Store {
     }
   }
   
+  /////// START OF UI CLASS ////////////////
+  
   class UI {
+	  
     static countHeadPre = 0;
     static countHeadOpen = 0;
     static countHeadClose = 0;
     static newRoster;
+	static rosters = [];
   
     static StoredPositions = [
       "Cook",
@@ -217,7 +240,8 @@ class Store {
       "Manager ARGM",
       "Middle Station"
     ];
-  
+	  
+    ////////////////COLOR POSITIONS /////////////////////////////////
     static colorPosition(position, el) {
       position == "Cook" ? (el.style.background = "#ff595e") : null;
       position == "Cashtill" ? (el.style.background = "#eccf1c") : null;
@@ -229,13 +253,14 @@ class Store {
       position == "Middle Station" ? (el.style.background = "#1982c4") : null;
     }
   
-    static displayRoster() {
-      const positions = UI.StoredPositions;
-      const rosters = Store.getRosters();
-      console.log(rosters);
-      rosters.forEach((roster) => {
-        UI.newRoster = new Roster(
-          roster.name,
+	//////////////////// DISPLAY ROSTER /////////////////////////////////////
+    static displayRoster(name = 'Empty') {
+      const positions = UI.StoredPositions;	
+      UI.rosters = Store.getRosters().filter((roster)=>{return roster.name == name});
+		//console.log(UI.rosters);
+      UI.rosters.forEach((roster) => {
+ 			UI.newRoster = new Roster(
+		  roster.name,
           roster.timePreSelect,
           roster.timeOpenSelect,
           roster.timeCloseSelect,
@@ -245,8 +270,12 @@ class Store {
           roster.shiftsPre,
           roster.shiftsOpen,
           roster.shiftsClose,
-          roster.labourPerHour
-        );
+          roster.labourPerHour 	
+		  );
+       // console.log(UI.newRoster);
+		
+		UI.rosterNames(Store.getRosters(), 'roster-template-select', roster.name);
+		  
         UI.addTimesRuler(
           UI.newRoster.timePreSelect,
           UI.newRoster.countHeadPre,
@@ -308,10 +337,14 @@ class Store {
           UI.newRoster.timeCloseSelect;
       });
     }
+	
+	////////////////////// END OF DISPLAY ROSTER ///////////////////////
+	
   
-    //ADD SHIFTS
+    //ADD SHIFT
     static addShiftToRoster(shifts, el, s, e, positions) {
       shifts.map((shift, index) => {
+		  let hours = "";
         //TABLE CELLS
         let cellDataFrom = document.createElement("td");
         let cellDataTo = document.createElement("td");
@@ -386,24 +419,49 @@ class Store {
         tableRowElement.appendChild(cellDataTo);
         tableRowElement.appendChild(cellDataPosition);
         tableRowElement.appendChild(cellDataDelete);
+		  
+		tableRowElement.querySelectorAll(".cell").forEach((e) => e.remove());
   
         UI.timeSlotsRowSelector(s, e).map((cell, index, arr) => {
           let timeCell = document.createElement("td");
           timeCell.classList.add("cell");
-          timeCell.innerText = cell;
+          //timeCell.innerText = cell;
           let from = arr.indexOf(shift.from);
           let to = arr.indexOf(shift.to);
-          index >= from && index < to
-            ? timeCell.classList.add("selected")
-            : timeCell.classList.add("unselected");
+			
+          if(index >= from && index < to){
+			  
+		  	timeCell.classList.add("selected");
+			 UI.colorPosition(shift.position,timeCell);
+			  
+			  index >= from
+                  ? timeCell.setAttribute("colspan", to - from)
+                  : timeCell;
+			  
+                arr.length = from + 1;
+			 
+                hours = (to - from) / 2;
+                timeCell.innerText = `${hours} ${
+                  hours < 2 ? "hour" : "hours"
+                } - ${shift.position}`;
+				
+			  
+		  } else {
+			  
+		  	timeCell.classList.add("unselected");
+		  }
+     		
           tableRowElement.appendChild(timeCell);
+			
         });
   
         let element = document.getElementById(el).appendChild(tableRowElement);
   
+		  
         //ADD EVENTS TO ALL SELECTS
         element.addEventListener("change", (el) => {
           let hours = "";
+			
           //IF CLICKED ON A --------FROM----------- SELECT ELEMENT
           if (el.target.classList.contains("from")) {
             //ID TO UPDATE THE SHIFT IN THE SHIFT ARRAY OBJ
@@ -420,18 +478,20 @@ class Store {
                   el.target.value
                 )
               : tableRowElement.parentElement;
-            console.log(UI.newRoster);
-            //UI
+            //console.log(UI.newRoster);
+            
+			  //UI
             tableRowElement.querySelectorAll(".cell").forEach((e) => e.remove());
+			  
             UI.timeSlotsRowSelector(s, e).map((cell, index, arr) => {
               let timeCell = document.createElement("td");
               timeCell.classList.add("cell");
               //timeCell.innerText = cell;
               let from = arr.indexOf(el.target.value);
               let to = arr.indexOf(el.currentTarget.children[1].firstChild.firstChild.value);
-              console.log(el.currentTarget);
+              //console.log(el.currentTarget);
               //// UPDATE THE LABOUR PER HOUR 
-              console.log(element.parentElement.id);
+              // console.log(element.parentElement.id);
               element.parentElement.id == 'open-row' ? UI.newRoster.updateLabourPerHour(arr) : null;
               element.parentElement.id == 'open-row' ? UI.displayLabourHours(
                 UI.newRoster.getLabourPerHour(),
@@ -447,14 +507,17 @@ class Store {
                   el.currentTarget.children.item(2).firstChild.firstChild.value,
                   timeCell
                 );
+				  
                 index >= from
                   ? timeCell.setAttribute("colspan", to - from)
                   : timeCell;
                 arr.length = from + 1;
+				//console.log(arr);
                 hours = (to - from) / 2;
                 timeCell.innerText = `${hours} ${
                   hours < 2 ? "hour" : "hours"
                 } - ${el.currentTarget.children.item(2).firstChild.firstChild.value}`;
+				
                 //UPDATE THE SHIFT OBJECT WITH HOURS PROPERTY
                 tableRowElement.parentElement.id == "pre-row"
                   ? UI.newRoster.setHoursShiftsPre(tableRowElement.id, hours)
@@ -463,12 +526,13 @@ class Store {
                   : tableRowElement.parentElement.id == "close-row"
                   ? UI.newRoster.setHoursShiftsClose(tableRowElement.id, hours)
                   : tableRowElement.parentElement;
-                console.log(UI.newRoster);
+                  //console.log(UI.newRoster);
               } else {
                 timeCell.classList.add("unselected");
               }
               tableRowElement.appendChild(timeCell);
             });
+			  
 
             //IF CLICKED ON A -------TO---------- SELECT ELEMENT
           } else if (el.target.classList.contains("to")) {
@@ -480,7 +544,7 @@ class Store {
               : tableRowElement.parentElement.id == "close-row"
               ? UI.newRoster.setShiftsCloseTo(tableRowElement.id, el.target.value)
               : tableRowElement.parentElement;
-            console.log(UI.newRoster);
+            //console.log(UI.newRoster);
             //UI
             tableRowElement.querySelectorAll(".cell").forEach((e) => e.remove());
             UI.timeSlotsRowSelector(s, e).map((cell, index, arr) => {
@@ -525,7 +589,7 @@ class Store {
                   : tableRowElement.parentElement.id == "close-row"
                   ? UI.newRoster.setHoursShiftsClose(tableRowElement.id, hours)
                   : tableRowElement.parentElement;
-                console.log(UI.newRoster);
+                //console.log(UI.newRoster);
               } else {
                 timeCell.classList.add("unselected");
               }
@@ -550,7 +614,7 @@ class Store {
                   el.target.value
                 )
               : tableRowElement.parentElement;
-            console.log(UI.newRoster);
+            //console.log(UI.newRoster);
             //CHANGE COLOR--------------------------------------------------------
             const selected = el.currentTarget.querySelectorAll(".selected");
             selected[0]
@@ -594,8 +658,10 @@ class Store {
         });
       });
     }
-
+  
+  /////////////// END OF AD SHIFT TO ROSTER ////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
+	
     //TOTAL HOURS
     static displayTotalHours(arr, el) {
       const totalElement = document.getElementById(el);
@@ -629,12 +695,12 @@ class Store {
 
     //TABLE LABOUR HEADER
     static displayLabourHours (arr, color = "orange", el1){
-      console.log(arr);
+      //console.log(arr);
       let reducedArr = [];
       for (let i = 0; i < arr.length; i = i + 2){
         arr[i] + arr[i+1] ? reducedArr.push(arr[i] + arr[i+1]) : reducedArr.push(0);
       }
-      console.log(reducedArr);
+      //console.log(reducedArr);
       const tableHead = document.getElementById(el1);
       let output = reducedArr.map((item, index, arr) => {
         //console.log(arr.length-1); gettin the last array item
@@ -686,8 +752,22 @@ class Store {
       });
       return output;
     }
+	
+	//ROSTER NAMES FOR THE ROSTER SELECT
+	static rosterNames (rosters, el, selected){
+		const element = document.getElementById(el);
+		let names = rosters.map((roster)=>{return `<option>${roster.name}</options>`});
+		element.innerHTML = names.join("");
+		element.value = selected;
+		}
+		
   }
   
+  ///////////////////// END OF UI CLASS ////////////////////////////////
+	
+
+  //////////////////// E V E N T S /////////////////////////////////////	
+	
   //////////////////////////////////////////////////////////////////////
   //EVENTS ON DOM LOAD
   document.addEventListener("DOMContentLoaded", () => {
@@ -695,8 +775,37 @@ class Store {
   });
   
   //EVENT SELECT ROSTER TO LOAD FROM LOCAL STORAGE
+  const selectRoster = document.getElementById('roster-template-select');
+	selectRoster.addEventListener('change', (e)=>{
+		
+		//CLEAR ALL TABLE ROWS FROM UI BEFORE LOADING NEW
+		const openElements = document.querySelector('#open-row');
+		openElements.querySelectorAll('tr').forEach(item=> item.remove());
+		
+		const preElements = document.querySelector('#pre-row');
+		preElements.querySelectorAll('tr').forEach(item=> item.remove());
+		
+		const closeElements = document.querySelector('#close-row');
+		closeElements.querySelectorAll('tr').forEach(item=> item.remove());
+		
+		//CLEAR DATA ARRAY
+		UI.rosters = [];
+		
+		//RENDER NEW IN UI
+		UI.displayRoster(e.target.value);
+		
+	});
   
   //EVENT SAVE ROSTER BUTTON
+  const saveRoster = document.getElementById('save-roster');
+  saveRoster.addEventListener('click', (e)=>{
+  		let rosterName = prompt('Please enter roster name.', '');
+	  	UI.newRoster.setRosterName(rosterName);
+	    Store.addRoster(UI.newRoster);
+	    UI.rosterNames(Store.getRosters(), 'roster-template-select');
+	 // console.log(UI.newRoster);
+	  
+  });
   
   //EVENTS ADD PRE SHIFT
   const addRowPreBtn = document.getElementById("add-row-pre-btn");
@@ -718,7 +827,7 @@ class Store {
       UI.StoredPositions
     );
     UI.newRoster.setShiftsPre(shift);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   //EVENTS ADD OPEN SHIFT
@@ -741,7 +850,7 @@ class Store {
       UI.StoredPositions
     );
     UI.newRoster.setShiftsOpen(shift);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   //EVENTS ADD CLOSE SHIFT
@@ -764,7 +873,7 @@ class Store {
       UI.StoredPositions
     );
     UI.newRoster.setShiftsClose(shift);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   //EVENTS TABLE HEAD SELECTS - PRE
@@ -778,7 +887,7 @@ class Store {
       "total-pre"
     );
     UI.newRoster.setTimePreSelect(e.target.value);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   const incrementPreBtn = document.getElementById("increment-pre-btn");
@@ -792,7 +901,7 @@ class Store {
       "total-pre"
     );
     UI.newRoster.setCountHeadPre(UI.countHeadPre);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   const decrementPreBtn = document.getElementById("decrement-pre-btn");
@@ -806,7 +915,7 @@ class Store {
       "total-pre"
     );
     UI.newRoster.setCountHeadPre(UI.countHeadPre);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   //EVENTS TABLE HEAD SELECTS - OPEN
@@ -820,7 +929,7 @@ class Store {
       "total-open"
     );
     UI.newRoster.setTimeOpenSelect(e.target.value);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   const incrementOpenBtn = document.getElementById("increment-open-btn");
@@ -835,7 +944,7 @@ class Store {
     );
     UI.newRoster.setCountHeadOpen(UI.countHeadOpen);
     UI.newRoster.setLabourPerHour(UI.countHeadOpen);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   const decrementOpenBtn = document.getElementById("decrement-open-btn");
@@ -850,7 +959,7 @@ class Store {
     );
     UI.newRoster.setCountHeadOpen(UI.countHeadOpen);
     UI.newRoster.setLabourPerHour(UI.countHeadOpen);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   //EVENTS TABLE HEAD SELECTS - CLOSE
@@ -864,7 +973,7 @@ class Store {
       "total-close"
     );
     UI.newRoster.setTimeCloseSelect(e.target.value);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   const incrementCloseBtn = document.getElementById("increment-close-btn");
@@ -878,7 +987,7 @@ class Store {
       "total-close"
     );
     UI.newRoster.setCountHeadClose(UI.countHeadClose);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
   const decrementCloseBtn = document.getElementById("decrement-close-btn");
@@ -892,6 +1001,6 @@ class Store {
       "total-close"
     );
     UI.newRoster.setCountHeadClose(UI.countHeadClose);
-    console.log(UI.newRoster);
+    //console.log(UI.newRoster);
   });
   
