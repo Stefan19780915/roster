@@ -54,25 +54,30 @@
           <option>Select Roster</option>
         </select>
       </div>
-      <button id="save-roster" class="margin-top-bottom">SAVE ROSTER</button>
+      <button id="save-roster" class="margin-top-bottom">SAVE AS NEW ROSTER</button>
+	  <button id="update-roster" class="margin-top-bottom">UPDATE CURRENT ROSTER</button>
+	  <button id="delete-roster" class="margin-top-bottom">DELETE CURRENT ROSTER</button>
     </div>
-
-    <div class="container-col">
-      <div class="flex-row">
-        <button id="add-row-open-btn" class="add-row-btn">+</button>
-        <table>
-          <thead>
-            <tr id="labour-hours-open-head"></tr>
-            <tr id="time-open-head"></tr>
-          </thead>
-          <tbody id="open-row"></tbody>
-        </table>
-      </div>
-
+	
+	
+	    <div class="container-col">
+	      <div class="flex-row">
+	        <button id="add-row-open-btn" class="add-row-btn">+</button>
+	        <table>
+			<caption>Store Openning</caption>
+	          <thead>
+	            <tr id="labour-hours-open-head"></tr>
+	            <tr id="time-open-head"></tr>
+	          </thead>
+	          <tbody id="open-row"></tbody>
+	        </table>
+	      </div>
+	
       <div class="container">
         <div class="flex-row">
           <button id="add-row-pre-btn" class="add-row-btn">+</button>
           <table>
+		  <caption>Store Pre-Openning</caption>
             <thead>
               <tr id="time-pre-head"></tr>
             </thead>
@@ -83,6 +88,7 @@
         <div class="flex-row">
           <button id="add-row-close-btn" class="add-row-btn">+</button>
           <table>
+		  <caption>Store Closing</caption>
             <thead>
               <tr id="time-close-head"></tr>
             </thead>

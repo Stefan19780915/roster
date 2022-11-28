@@ -41,8 +41,16 @@ class Store {
           rosters.splice(index, 1);
         }
       });
-      localStorage.setItems("rosters", JSON.stringify(rosters));
+      localStorage.setItem("rosters", JSON.stringify(rosters));
+	  window.confirm(`Roster ${name} was deleted`);
     }
+	
+	static updateRoster(name, newRoster){
+		Store.removeRoster(name);
+		Store.addRoster(newRoster);
+		window.confirm(`Roster ${name} was updated`);
+	}
+	
   }
 
   //////////////////END OF CLASS STORE //////////////////////
@@ -799,13 +807,25 @@ class Store {
   //EVENT SAVE ROSTER BUTTON
   const saveRoster = document.getElementById('save-roster');
   saveRoster.addEventListener('click', (e)=>{
-  		let rosterName = prompt('Please enter roster name.', '');
+  		let rosterName = prompt('Please enter a NEW ROSTER NAME.', '');
 	  	UI.newRoster.setRosterName(rosterName);
 	    Store.addRoster(UI.newRoster);
 	    UI.rosterNames(Store.getRosters(), 'roster-template-select');
 	 // console.log(UI.newRoster);
 	  
   });
+	
+  // DELETE ROSTER BUTTON
+	const deleteRoster = document.getElementById('delete-roster');
+	deleteRoster.addEventListener('click', (e)=>{
+		Store.removeRoster(selectRoster.value);
+	});
+	
+  //UPDATE ROSTER BUTTON
+	const updateRoster = document.getElementById('update-roster');
+	updateRoster.addEventListener('click', (e)=>{
+		Store.updateRoster(selectRoster.value, UI.newRoster);
+	});
   
   //EVENTS ADD PRE SHIFT
   const addRowPreBtn = document.getElementById("add-row-pre-btn");
