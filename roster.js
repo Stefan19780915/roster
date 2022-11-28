@@ -19,7 +19,8 @@ class Store {
           [],
           [],
           [],
-          []
+          [],
+		  []	  
         );
         Store.rosters = [Store.roster];
       } else {
@@ -70,7 +71,8 @@ class Store {
       shiftsPre,
       shiftsOpen,
       shiftsClose,
-      labourPerHour
+      labourPerHour,
+	  transactionsPerHour
     ) {
       (this.name = name),
         (this.timePreSelect = timePreSelect),
@@ -82,6 +84,7 @@ class Store {
         (this.shiftsPre = shiftsPre),
         (this.shiftsOpen = shiftsOpen),
         (this.shiftsClose = shiftsClose),
+		(this.transactionsPerHour = transactionsPerHour),
         (this.labourPerHour = labourPerHour);
     }
 	setRosterName(name){
@@ -192,6 +195,17 @@ class Store {
     setLabourPerHour(num){
       this.labourPerHour = Array(num).fill(0);
     }
+	setTransactionsPerHour(arr){
+		let reducedArr = [];
+      		for (let i = 0; i < arr.length; i = i + 2){
+        	arr[i] + arr[i+1] ? reducedArr.push(arr[i]) : reducedArr.push(0);
+      		}
+			reducedArr.pop();
+		let obj = reducedArr.map((item)=>{
+			return { [item]: 0 };
+		});
+		this.transactionsPerHour = obj;
+	}
     updateLabourPerHour(arr){
       this.setLabourPerHour(this.countHeadOpen);
       //console.log(arr);
@@ -278,9 +292,10 @@ class Store {
           roster.shiftsPre,
           roster.shiftsOpen,
           roster.shiftsClose,
-          roster.labourPerHour 	
+          roster.labourPerHour,
+		  roster.transactionsPerHour  
 		  );
-       // console.log(UI.newRoster);
+        //console.log(UI.newRoster);
 		
 		UI.rosterNames(Store.getRosters(), 'roster-template-select', roster.name);
 		  
@@ -740,7 +755,7 @@ class Store {
       timeSlots.innerHTML = output.join("");
     }
   
-    //TIMES FOR ROW SELECT DYNAMIC
+    //TIMES FOR ROW SELECT DYNAMIC - RETURNS JUST THE ARRAY OF TIMES
     static timeSlotsRowSelector(s = "10:00", e = 0) {
       let hours = s.split(":");
       const result = [];
@@ -964,7 +979,8 @@ class Store {
     );
     UI.newRoster.setCountHeadOpen(UI.countHeadOpen);
     UI.newRoster.setLabourPerHour(UI.countHeadOpen);
-    //console.log(UI.newRoster);
+	UI.newRoster.setTransactionsPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value,UI.countHeadOpen));  
+    console.log(UI.newRoster);
   });
   
   const decrementOpenBtn = document.getElementById("decrement-open-btn");
