@@ -796,6 +796,52 @@ class Store {
   document.addEventListener("DOMContentLoaded", () => {
     UI.displayRoster();
   });
+	
+  //LOAD TRS FROM EXCEL FILE
+  document.getElementById("input-trs").onchange = (evt) => {
+    // (A) NEW FILE READER
+    var reader = new FileReader();
+        // (B) ON FINISH LOADING
+		reader.addEventListener("loadend", (evt) => {
+		    // (B1) GET THE FIRST WORKSHEET
+		    var workbook = XLSX.read(evt.target.result, {type: "binary"}),
+		        worksheet = workbook.Sheets[workbook.SheetNames[0]],
+		        range = XLSX.utils.decode_range(worksheet["!ref"]);
+		    // (B2) READ CELLS IN ARRAY
+		    var data = [];
+		    for (let row=range.s.r; row<=range.e.r; row++) {
+		      let i = data.length;
+		      data.push([]);
+		      for (let col=range.s.c; col<=range.e.c; col++) {
+		        let cell = worksheet[XLSX.utils.encode_cell({r:row, c:col})];
+		        data[i].push(cell);
+		      }
+		    }
+		    //console.log(data);
+			const trsPerHour = data.map((item, index)=>{
+					let values = item.map((row, index)=>{
+						return row.w;
+					});
+					let keys = data[0].map((key, index)=>{
+						return {
+							[key.w] : values[index]
+						}	
+					});
+					return keys;
+				});
+			
+			trsPerHour.shift();
+			
+			const obj = trsPerHour.map((trs)=>{
+				const returnedTarget = Object.assign({},...trs);
+				return returnedTarget;
+				});
+			console.log(obj);	
+		});
+    // (C) START - READ SELECTED EXCEL FILE
+    reader.readAsArrayBuffer(evt.target.files[0]);
+  };
+	
   
   //EVENT SELECT ROSTER TO LOAD FROM LOCAL STORAGE
   const selectRoster = document.getElementById('roster-template-select');

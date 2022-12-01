@@ -2,9 +2,9 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="roster.css">
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <script defer src="roster.js"></script>
     <title>Roster</title>
   </head>
@@ -46,9 +46,10 @@
         <p>Total: <span id="total-close"></span> hours.</p>
       </div>
     </div>
-
-    <div class="container width-small">
-      <label class="margin-top-bottom"><strong>Templates:</strong></label>
+	
+<label class="width"><strong>Templates:</strong></label>
+    
+	<div class="container width-small mt">
 	  <div class="select">
         <select id="roster-template-select">
           <option>Select Roster</option>
@@ -59,6 +60,10 @@
 	  <button id="delete-roster" class="margin-top-bottom">DELETE CURRENT ROSTER</button>
     </div>
 	
+<label class="width"><strong>Load Transactions</strong></label>	
+	<div class="container mt">
+		<input type="file" id="input-trs" accept=".xls,.xlsx"/>
+	</div>
 	
 	    <div class="container-col">
 	      <div class="flex-row">
