@@ -1,6 +1,7 @@
  ///////////////////// STORE CLASS //////////////////////////
 
 class Store {
+	static trs = [{Date: 'Select Day'}];
 	static roster = {};
     static rosters = [];
 	
@@ -50,6 +51,22 @@ class Store {
 		Store.removeRoster(name);
 		Store.addRoster(newRoster);
 		window.confirm(`Roster ${name} was updated`);
+	}
+	
+	static getTrs(arr){
+		if(localStorage.getItem('trs') == null){
+			localStorage.setItem('trs', JSON.stringify(arr));
+		} else {
+			Store.trs = JSON.parse(localStorage.getItem('trs'));
+		}
+		return Store.trs;
+	}
+	
+	static addTrs(arr){
+		let trs = Store.getTrs(arr);
+		trs = [...trs, ...arr];
+		localStorage.setItem("trs", JSON.stringify(trs));
+		window.confirm(`Transactions were added`);
 	}
 	
   }
@@ -298,6 +315,7 @@ class Store {
         //console.log(UI.newRoster);
 		
 		UI.rosterNames(Store.getRosters(), 'roster-template-select', roster.name);
+		UI.trsDays(Store.getTrs(Store.trs), 'day-select', Store.trs[0].Date );
 		  
         UI.addTimesRuler(
           UI.newRoster.timePreSelect,
@@ -776,16 +794,23 @@ class Store {
       return output;
     }
 	
+	static trsDays(trs, el, selected){
+		const element = document.getElementById(el);
+		let days = trs.map((t)=>{return `<option>${t.Date}</options>`});
+		element.innerHTML = days.join("");
+		element.value = selected;
+	}
+	
 	//ROSTER NAMES FOR THE ROSTER SELECT
 	static rosterNames (rosters, el, selected){
 		const element = document.getElementById(el);
 		let names = rosters.map((roster)=>{return `<option>${roster.name}</options>`});
 		element.innerHTML = names.join("");
 		element.value = selected;
-		}
-		
-  }
-  
+			}
+	}
+	
+
   ///////////////////// END OF UI CLASS ////////////////////////////////
 	
 
@@ -836,8 +861,12 @@ class Store {
 				const returnedTarget = Object.assign({},...trs);
 				return returnedTarget;
 				});
-			console.log(obj);	
+			//console.log(obj[1]['14:00']);
+			Store.addTrs(obj);
+			UI.trsDays(Store.getTrs(Store.trs), 'day-select', Store.trs[0].Date);
+			
 		});
+	  
     // (C) START - READ SELECTED EXCEL FILE
     reader.readAsArrayBuffer(evt.target.files[0]);
   };
