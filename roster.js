@@ -223,6 +223,11 @@ class Store {
 		});
 		this.transactionsPerHour = obj;
 	}
+	
+	updateTransactionsPerHour(trsArr){
+		this.transactionsPerHour = trsArr;
+	}
+	
     updateLabourPerHour(arr){
       this.setLabourPerHour(this.countHeadOpen);
       //console.log(arr);
@@ -316,6 +321,18 @@ class Store {
 		
 		UI.rosterNames(Store.getRosters(), 'roster-template-select', roster.name);
 		UI.trsDays(Store.getTrs(Store.trs), 'day-select', Store.trs[0].Date );
+		  
+		  //LOAD THE OPENTIME HEADS ONLY IF THERE ARE TRS LOADED IN LOCAL STORRAGE HERE
+		  
+		  if(Store.trs.length > 1 ){
+			  
+			  UI.displayTimeHeadsFromLoadedTrs(Store.getTrs());
+			  
+		  		console.log('Will load time heads');
+		  } else {
+		  	console.log('will not load time heads');
+		  }
+		  //// END OF LOADING TRS IF EXITNING 
 		  
         UI.addTimesRuler(
           UI.newRoster.timePreSelect,
@@ -655,7 +672,7 @@ class Store {
                   el.target.value
                 )
               : tableRowElement.parentElement;
-            //console.log(UI.newRoster);
+            console.log(UI.newRoster);
             //CHANGE COLOR--------------------------------------------------------
             const selected = el.currentTarget.querySelectorAll(".selected");
             selected[0]
@@ -747,7 +764,7 @@ class Store {
         //console.log(arr.length-1); gettin the last array item
         return `<td class="labour-number ${color}" colspan="${index == arr.length-1 && item < 1 ? '1' : '2'}">${item}</td>`;
       });
-      const rowHeadEmpty = `<th></th><th class="width"></th><th>LABOUR PLAN</th><th></th>`;
+      const rowHeadEmpty = `<th></th><th class="width"></th><th class="labour-plan">LABOUR PLAN</th><th></th>`;
       output.unshift(rowHeadEmpty);
       tableHead.innerHTML = output.join("");
     }
@@ -794,6 +811,76 @@ class Store {
       return output;
     }
 	
+	static displayTimeHeadsFromLoadedTrs(trsFromStore){
+		
+		//CLEAR HEAD OBJECT
+		UI.countHeadOpen = 0;
+		
+		//GET THE TRS AND DISPLAY THE TIMES HEADS FROM LOADED TRS  --- FUNCTION START /////
+			const trs = trsFromStore;
+	  		const selectedTrs = trs[1];
+			
+			//MAKE THE NEW trsArr
+			//console.log(selectedTrs);
+	  		const keys = Object.keys(selectedTrs);
+	  		const values = Object.values(selectedTrs);
+	  		values.shift();
+	  		keys.shift();
+			
+			// PREPARING THE TRSARRAY
+	  		//console.log(keys, values);
+	  		const trsArr = keys.map((key, index)=>{
+	  		return { [key] : values[index]};
+	  		}); 
+	  		//console.log(trsArr);
+			
+			    //// UPDATE THE UI ///// //console.log(trsArr); 
+				  UI.addTimesRuler(
+			      keys[0],
+			      UI.countHeadOpen,
+			      "green",
+			      "time-open-head",
+			      "total-open"
+			    );
+				//SETTING THE TIME OPEN SEPELCT TO THE CORRECT START ON THE OBJECT
+			    UI.newRoster.setTimeOpenSelect(keys[0]);
+			
+			    //SETTING HOW MANY HOURS THERE ARE IN THE EXCELL WITH TRS
+				const hours = (keys.length*2)-1;
+			
+			    // LOOP TO CREATE ALL TIME HEADS THE NUMBER OF TIMES OF HOURS
+				  for (let i = 0; i < hours; i++ ){
+					UI.countHeadOpen++;
+			    	UI.addTimesRuler(
+			        keys[0],
+			        UI.countHeadOpen,
+			        "green",
+			        "time-open-head",
+			        "total-open"
+			        );
+			    	UI.newRoster.setCountHeadOpen(UI.countHeadOpen);
+			    	//UI.newRoster.setLabourPerHour(UI.countHeadOpen);
+					UI.newRoster.setTransactionsPerHour(UI.timeSlotsRowSelector(keys[0],UI.countHeadOpen));
+					//DISPLAY THE LABOUR HOURS HEADS AS WELL
+					UI.displayLabourHours(
+                	UI.newRoster.getLabourPerHour(),
+                		'orange',
+                		'labour-hours-open-head'
+              		);
+				  }
+				  
+				  // UPDATE THE OPEN SELECT WITH THE TRS TIME OPEN START
+				  const selectOpen = document.getElementById("time-open-select");
+				  const arr = Array.prototype.slice.call(selectOpen.options)
+						arr.forEach((item)=>{
+							item.value == keys[0] ? item.selected = true : item;	
+			});
+	 	///////END OF UPDATE UI with head times ////
+		
+	}
+	
+	
+	//TRS DAYS FOR ROSTER SELECT DAY
 	static trsDays(trs, el, selected){
 		const element = document.getElementById(el);
 		let days = trs.map((t)=>{return `<option>${t.Date}</options>`});
@@ -820,6 +907,7 @@ class Store {
   //EVENTS ON DOM LOAD
   document.addEventListener("DOMContentLoaded", () => {
     UI.displayRoster();
+	  console.log(UI.newRoster);
   });
 	
   //LOAD TRS FROM EXCEL FILE
@@ -827,6 +915,7 @@ class Store {
     // (A) NEW FILE READER
     var reader = new FileReader();
         // (B) ON FINISH LOADING
+	  
 		reader.addEventListener("loadend", (evt) => {
 		    // (B1) GET THE FIRST WORKSHEET
 		    var workbook = XLSX.read(evt.target.result, {type: "binary"}),
@@ -865,11 +954,78 @@ class Store {
 			Store.addTrs(obj);
 			UI.trsDays(Store.getTrs(Store.trs), 'day-select', Store.trs[0].Date);
 			
+		//GET THE TRS AND DISPLAY THE TIMES HEADS FROM LOADED TRS  --- FUNCTION START /////
+			UI.displayTimeHeadsFromLoadedTrs(Store.getTrs());
+	 	///////END OF UPDATE UI with head times ////
+			console.log(UI.newRoster);
+				  
 		});
+	  
+	// END OF FINISH LOADING
 	  
     // (C) START - READ SELECTED EXCEL FILE
     reader.readAsArrayBuffer(evt.target.files[0]);
   };
+  
+  //EVENT SELECT DAY ON ROSTER - TO SELECT A SPECIFIC DAY TRS
+  
+  const selectDay = document.getElementById('day-select');
+  selectDay.addEventListener('change', (e)=>{
+	  const trs = Store.getTrs();
+	  const selectedTrs = trs.find((item)=>{
+	  		return item.Date == e.target.value;
+	  });
+	  //console.log(selectedTrs);
+	  const keys = Object.keys(selectedTrs);
+	  const values = Object.values(selectedTrs);
+	  values.shift();
+	  keys.shift();
+	  //console.log(keys, values);
+	  
+	  const trsArr = keys.map((key, index)=>{
+	  	return { [key] : values[index]};
+	  }); 
+	  
+	  //console.log(trsArr); //// UPDATE THE UI /////
+	  /*
+	  UI.addTimesRuler(
+      keys[0],
+      UI.countHeadOpen,
+      "green",
+      "time-open-head",
+      "total-open"
+    );
+    UI.newRoster.setTimeOpenSelect(keys[0]);
+	  
+	const hours = (keys.length*2)-1;
+	  for (i = 0; i < hours; i++ ){
+		UI.countHeadOpen++;
+    	UI.addTimesRuler(
+        keys[0],
+        UI.countHeadOpen,
+        "green",
+        "time-open-head",
+        "total-open"
+        );
+    	UI.newRoster.setCountHeadOpen(UI.countHeadOpen);
+    	UI.newRoster.setLabourPerHour(UI.countHeadOpen);
+		UI.newRoster.setTransactionsPerHour(UI.timeSlotsRowSelector(keys[0],UI.countHeadOpen));  
+	  }
+	  
+	  // UPDATE THE OPEN SELECT WITH THE TRS TIME OPEN START
+	  const selectOpen = document.getElementById("time-open-select");
+	  const arr = Array.prototype.slice.call(selectOpen.options)
+			arr.forEach((item)=>{
+				item.value == keys[0] ? item.selected = true : item;	
+			});
+	  */
+	  //END OF UPDATE UI with head times ////
+	  
+	  //UPDATE THE NEW ROSTER TRSPERHOUR
+	  
+	  UI.newRoster.updateTransactionsPerHour(trsArr);
+		console.log(UI.newRoster);
+  });
 	
   
   //EVENT SELECT ROSTER TO LOAD FROM LOCAL STORAGE
@@ -886,12 +1042,13 @@ class Store {
 		const closeElements = document.querySelector('#close-row');
 		closeElements.querySelectorAll('tr').forEach(item=> item.remove());
 		
-		//CLEAR DATA ARRAY
+		//CLEAR DATA ARRAY AND HEAD COUNT
 		UI.rosters = [];
+		UI.countHeadOpen = 0;
 		
 		//RENDER NEW IN UI
 		UI.displayRoster(e.target.value);
-		
+		console.log(UI.newRoster);
 	});
   
   //EVENT SAVE ROSTER BUTTON
