@@ -21,7 +21,8 @@ class Store {
           [],
           [],
           [],
-		  []	  
+		  [],
+		  []
         );
         Store.rosters = [Store.roster];
       } else {
@@ -89,7 +90,8 @@ class Store {
       shiftsOpen,
       shiftsClose,
       labourPerHour,
-	  transactionsPerHour
+	  transactionsPerHour,
+	  deploymentCard
     ) {
       (this.name = name),
         (this.timePreSelect = timePreSelect),
@@ -102,8 +104,38 @@ class Store {
         (this.shiftsOpen = shiftsOpen),
         (this.shiftsClose = shiftsClose),
 		(this.transactionsPerHour = transactionsPerHour),
-        (this.labourPerHour = labourPerHour);
+        (this.labourPerHour = labourPerHour),
+		(this.deploymentCard = deploymentCard);
     }
+	
+	static preShiftsIds = [];
+	static openShiftsIds = [];
+	static closeShiftsIds = [];
+	
+	setPreShiftId(){
+	this.shiftsPre.length > 0 ? (
+	  		Roster.preShiftsIds = this.shiftsPre.map((shift)=>{
+				return shift.id+1;
+			})
+	  ) : (Roster.preShiftsIds.push(1));
+	}
+	
+	setOpenShiftId(){
+	this.shiftsOpen.length > 0 ? (
+	  		Roster.openShiftsIds = this.shiftsOpen.map((shift)=>{
+				return shift.id+1;
+			})
+	  ) : (Roster.openShiftsIds.push(1));
+	}
+	
+	setCloseShiftId(){
+	this.shiftsClose.length > 0 ? (
+	  		Roster.closeShiftsIds = this.shiftsClose.map((shift)=>{
+				return shift.id+1;
+			})
+	  ) : (Roster.closeShiftsIds.push(1));
+	}
+	
 	setRosterName(name){
 		this.name = name;
 	}
@@ -246,6 +278,11 @@ class Store {
     getLabourPerHour(){
       return this.labourPerHour;
     }
+	
+	setDeploymentRow(obj) {
+      this.deploymentCard.push(obj);
+    }
+	
   }
   
   //////////////// END OF CLASS ROSTER /////////////////////
@@ -262,6 +299,25 @@ class Store {
       this.break = pause;
       this.hours = hours;
     }
+  }
+  
+  ///////////// END OF SHIFT CLASS /////////
+  
+  //////////// DEPLOYMENT CARD CLASS ///////
+  
+  class Deployment {
+  	constructor(positions, t0, t35, t45, t55, t65, t75, t85, t95, t105){
+		this.positions = positions;
+		this.t0 = t0;
+		this.t35 = t35;
+		this.t45 = t45;
+		this.t55 = t55;
+		this.t65 = t65;
+		this.t75 = t75;
+		this.t85 = t85;
+		this.t95 = t95;
+		this.t105 = t105;
+	}
   }
   
   /////// START OF UI CLASS ////////////////
@@ -296,6 +352,15 @@ class Store {
       position == "Manager ARGM" ? (el.style.background = "#f15bb5") : null;
       position == "Middle Station" ? (el.style.background = "#1982c4") : null;
     }
+	
+	//////////////////////DISPLAY DEPLOYMENT CARD TABLE /////////////////////
+	
+	static displayDeploymentCard(deploymentCard){
+
+		
+	}
+	
+	/////////////////////END OF DISPLAY DEPLOYMENT CARD TABLE
   
 	//////////////////// DISPLAY ROSTER /////////////////////////////////////
     static displayRoster(name = 'Empty') {
@@ -315,7 +380,8 @@ class Store {
           roster.shiftsOpen,
           roster.shiftsClose,
           roster.labourPerHour,
-		  roster.transactionsPerHour  
+		  roster.transactionsPerHour,
+		  roster.deploymentCard
 		  );
         //console.log(UI.newRoster);
 		
@@ -328,9 +394,9 @@ class Store {
 			  
 			  UI.displayTimeHeadsFromLoadedTrs(Store.getTrs());
 			  
-		  		console.log('Will load time heads');
+		  		//console.log('Will load time heads');
 		  } else {
-		  	console.log('will not load time heads');
+		  		//console.log('will not load time heads');
 		  }
 		  //// END OF LOADING TRS IF EXITNING 
 		  
@@ -910,6 +976,40 @@ class Store {
 	  console.log(UI.newRoster);
   });
 	
+  // OPEN THE DIALOG FOR DEPLOYMENT CARD /////////////////////////////
+	
+	const openModal = document.querySelector('.open-modal');
+	const closeModal = document.querySelector('.close-modal');
+	const modal = document.querySelector('.modal');
+	
+	openModal.addEventListener('click', ()=>{
+		modal.showModal();
+	});
+	
+	closeModal.addEventListener('click', ()=>{
+		modal.close();
+	});
+	
+	//console.log(openModal, closeModal, modal);
+  // END OF OPEN DEPLOYMENT CARD
+	
+
+  // ADD DEPLOYMENT ROW ////
+	
+	const addDeployment = document.querySelector('.add-deployment');
+	addDeployment.addEventListener('click', (e)=>{
+		//console.log(e.target);
+		const deploymentRow = new Deployment(
+			UI.StoredPositions[0],
+			0, 0, 0, 0, 0, 0, 0, 0, 0
+			);
+		UI.newRoster.setDeploymentRow(deploymentRow);
+		console.log(UI.newRoster);
+	})
+	
+  // END OF ADD DEPLOYMENT ROW ///
+	
+	
   //LOAD TRS FROM EXCEL FILE
   document.getElementById("input-trs").onchange = (evt) => {
     // (A) NEW FILE READER
@@ -1078,8 +1178,9 @@ class Store {
   const addRowPreBtn = document.getElementById("add-row-pre-btn");
   addRowPreBtn.addEventListener("click", (e) => {
     const timePreSelect = document.getElementById("time-pre-select");
-    let shift = new Shift(
-      UI.newRoster.shiftsPre.length,
+    UI.newRoster.setPreShiftId();
+	  let shift = new Shift(
+      Math.max(...Roster.preShiftsIds),
       "",
       UI.StoredPositions[0],
       timePreSelect.value,
@@ -1101,8 +1202,10 @@ class Store {
   const addRowOpenBtn = document.getElementById("add-row-open-btn");
   addRowOpenBtn.addEventListener("click", (e) => {
     const timeOpenSelect = document.getElementById("time-open-select");
+	UI.newRoster.setOpenShiftId();
+	//console.log(Roster.openShiftsIds);  
     let shift = new Shift(
-      UI.newRoster.shiftsOpen.length,
+      Math.max(...Roster.openShiftsIds),
       "",
       UI.StoredPositions[0],
       timeOpenSelect.value,
@@ -1124,8 +1227,9 @@ class Store {
   const addRowCloseBtn = document.getElementById("add-row-close-btn");
   addRowCloseBtn.addEventListener("click", (e) => {
     const timeCloseSelect = document.getElementById("time-close-select");
+	  UI.newRoster.setCloseShiftId();
     let shift = new Shift(
-      UI.newRoster.shiftsClose.length,
+      Math.max(...Roster.closeShiftsIds),
       "",
       UI.StoredPositions[0],
       timeCloseSelect.value,

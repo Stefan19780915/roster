@@ -226,6 +226,16 @@
     color: rgb(181 181 181);
   }
   
+  .modal {
+  	padding: 1em;
+	border: 0;
+	box-shadow: 0 0 0.5rem 0;
+	background: rgb(209 209 209); 
+  }
+   
+  .modal::backdrop {
+  	background: rgb(0 0 0 / .4); 
+  }
   
   @media only screen and (max-width: 600px) {
   body {
