@@ -111,7 +111,28 @@ class Store {
 	static preShiftsIds = [];
 	static openShiftsIds = [];
 	static closeShiftsIds = [];
+	static deploymentIds = [];
 	
+	setDeploymentPosition(id, position){
+		//console.log(id, position);
+		this.deploymentCard.forEach((row) => {
+        row.id == id ? (row.positions = position) : row.positions;
+      });
+		
+	}
+	
+	deleteDeploymentRow(id){
+		this.deploymentCard.forEach((row, index) => {
+        id == row.id ? this.deploymentCard.splice(index, 1) : row;
+      });
+	}
+	
+	setCheckBox(id, label){
+		this.deploymentCard.forEach((row, index) => {
+		id != row.id ? row : id == row.id && row[label] == 1 ? row[label] = 0 : row[label] = 1;
+      });
+	}
+
 	setPreShiftId(){
 	this.shiftsPre.length > 0 ? (
 	  		Roster.preShiftsIds = this.shiftsPre.map((shift)=>{
@@ -283,6 +304,15 @@ class Store {
       this.deploymentCard.push(obj);
     }
 	
+	setDeploymentId(){
+	this.deploymentCard.length > 0 ? (
+	  		Roster.deploymentIds = this.deploymentCard.map((card)=>{
+				return card.id+1;
+			})
+	  ) : (Roster.deploymentIds.push(1));
+	}
+	
+	
   }
   
   //////////////// END OF CLASS ROSTER /////////////////////
@@ -306,7 +336,8 @@ class Store {
   //////////// DEPLOYMENT CARD CLASS ///////
   
   class Deployment {
-  	constructor(positions, t0, t35, t45, t55, t65, t75, t85, t95, t105){
+  	constructor(id, positions, t0, t35, t45, t55, t65, t75, t85, t95, t105){
+		this.id = id;
 		this.positions = positions;
 		this.t0 = t0;
 		this.t35 = t35;
@@ -353,14 +384,6 @@ class Store {
       position == "Middle Station" ? (el.style.background = "#1982c4") : null;
     }
 	
-	//////////////////////DISPLAY DEPLOYMENT CARD TABLE /////////////////////
-	
-	static displayDeploymentCard(deploymentCard){
-
-		
-	}
-	
-	/////////////////////END OF DISPLAY DEPLOYMENT CARD TABLE
   
 	//////////////////// DISPLAY ROSTER /////////////////////////////////////
     static displayRoster(name = 'Empty') {
@@ -384,7 +407,7 @@ class Store {
 		  roster.deploymentCard
 		  );
         //console.log(UI.newRoster);
-		
+		  
 		UI.rosterNames(Store.getRosters(), 'roster-template-select', roster.name);
 		UI.trsDays(Store.getTrs(Store.trs), 'day-select', Store.trs[0].Date );
 		  
@@ -786,6 +809,103 @@ class Store {
   /////////////// END OF AD SHIFT TO ROSTER ////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 	
+  /////////////// DISPLAY DEPLOYMENT ROW ///////////////////////////////////////////
+	
+  static displayDeploymentRow(roster, positionsAll){
+  	  const table = document.getElementById('deployment-table');
+	  const tableBody = table.firstElementChild.nextElementSibling;
+	  tableBody.querySelectorAll('.table-row').forEach((e) => e.remove());
+	  
+	  //console.log(tableBody);
+	  
+	  roster.deploymentCard.map((row)=>{
+		//TABLE ROW
+		const tableRowElement = document.createElement('tr');
+			  tableRowElement.classList.add('table-row');
+		  	  tableRowElement.id = row.id;
+		  
+		//TABLE CELLS
+		const selectTableData = document.createElement('td');
+		const deleteBtnTableData = document.createElement('td');
+		//DESTRUCTURE THE ROW OBJECT TO GET ONLY THE CHECKBOXES
+		const {id, positions,...checkBoxes} = row;
+		//console.log(checkBoxes);
+		  
+		// SELECT
+		const selectWrapper = document.createElement('div');
+		  	  selectWrapper.classList.add('select');
+		const selectPositions = document.createElement('select');
+		      selectWrapper.appendChild(selectPositions);
+		      selectTableData.appendChild(selectWrapper);
+		  
+		//DELETE BTN
+        const deleteBtn = document.createElement("button");
+        deleteBtn.classList.add("delete-btn");
+        deleteBtn.innerText = "X";
+        deleteBtn.id = row.id;
+		deleteBtnTableData.appendChild(deleteBtn);
+		  
+		positionsAll.map((position) => {
+          let optionElement = document.createElement("option");
+          optionElement.innerHTML = position;
+          optionElement.innerText == row.positions
+            ? (optionElement.selected = "selected")
+            : "";
+          selectPositions.appendChild(optionElement);
+        });
+		
+		//ADD EACH TABLE DATA TO THE TABLE ROW
+		tableRowElement.appendChild(selectTableData);
+		tableRowElement.appendChild(deleteBtnTableData);
+		
+		//ITERATE THROUGH THE CHECKBOX DESTRUCTURED --ROW-- OBJECT KEYS TO CREATE THE CHECBOXES
+		Object.keys(checkBoxes).forEach((key, index)=>{
+			const td = document.createElement('td');
+		    const check = document.createElement('input');
+				  check.setAttribute('type', 'checkbox');
+		          check.classList.add(key);
+				  checkBoxes[key] == 0 ? check.checked = false : check.checked = true; 
+			td.appendChild(check);
+			tableRowElement.appendChild(td);
+		});
+		
+		//FINALLY APPEND THE WHOLE ROW
+		tableBody.appendChild(tableRowElement);	
+			
+		
+		//ADD EVENT LISTEENERES TO SELECTS POSITONS
+		tableRowElement.addEventListener('change', (el)=>{
+			//console.log(el.currentTarget.id, el.target.type);
+			el.target.type == 'select-one' ? 
+			UI.newRoster.setDeploymentPosition(
+			el.currentTarget.id,
+			el.target.value
+			) : '';
+			
+			el.target.type == 'checkbox' ? 
+			UI.newRoster.setCheckBox(el.currentTarget.id, el.target.classList)
+			 : '';
+			console.log(UI.newRoster);
+		});
+		
+		//ADD EVENT LISTENERS TO DELETE BTN
+		tableRowElement.addEventListener('click', (el)=>{
+			//console.log(el.currentTarget.id);
+			UI.newRoster.deleteDeploymentRow(el.target.id);
+			
+			//REMOVE FROM UI
+            el.currentTarget.id == el.target.id
+              ? el.currentTarget.remove()
+              : el.currentTarget;
+			//console.log(UI.newRoster);
+		});
+		
+	});
+  }
+  
+  
+  /////////////// END OF DISPLAY DEPLOYMENT ROW ////////////////////////////////
+	
     //TOTAL HOURS
     static displayTotalHours(arr, el) {
       const totalElement = document.getElementById(el);
@@ -973,7 +1093,7 @@ class Store {
   //EVENTS ON DOM LOAD
   document.addEventListener("DOMContentLoaded", () => {
     UI.displayRoster();
-	  console.log(UI.newRoster);
+	 console.log(UI.newRoster);
   });
 	
   // OPEN THE DIALOG FOR DEPLOYMENT CARD /////////////////////////////
@@ -983,6 +1103,7 @@ class Store {
 	const modal = document.querySelector('.modal');
 	
 	openModal.addEventListener('click', ()=>{
+		UI.displayDeploymentRow(UI.newRoster,UI.StoredPositions);
 		modal.showModal();
 	});
 	
@@ -999,11 +1120,14 @@ class Store {
 	const addDeployment = document.querySelector('.add-deployment');
 	addDeployment.addEventListener('click', (e)=>{
 		//console.log(e.target);
+		UI.newRoster.setDeploymentId();
 		const deploymentRow = new Deployment(
+			Math.max(...Roster.deploymentIds),
 			UI.StoredPositions[0],
-			0, 0, 0, 0, 0, 0, 0, 0, 0
+			1, 1, 1, 1, 1, 1, 1, 1, 1
 			);
 		UI.newRoster.setDeploymentRow(deploymentRow);
+		UI.displayDeploymentRow(UI.newRoster,UI.StoredPositions);
 		console.log(UI.newRoster);
 	})
 	
