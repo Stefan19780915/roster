@@ -112,26 +112,8 @@ class Store {
 	static openShiftsIds = [];
 	static closeShiftsIds = [];
 	static deploymentIds = [];
+	static idealHours = [];
 	
-	setDeploymentPosition(id, position){
-		//console.log(id, position);
-		this.deploymentCard.forEach((row) => {
-        row.id == id ? (row.positions = position) : row.positions;
-      });
-		
-	}
-	
-	deleteDeploymentRow(id){
-		this.deploymentCard.forEach((row, index) => {
-        id == row.id ? this.deploymentCard.splice(index, 1) : row;
-      });
-	}
-	
-	setCheckBox(id, label){
-		this.deploymentCard.forEach((row, index) => {
-		id != row.id ? row : id == row.id && row[label] == 1 ? row[label] = 0 : row[label] = 1;
-      });
-	}
 
 	setPreShiftId(){
 	this.shiftsPre.length > 0 ? (
@@ -312,7 +294,130 @@ class Store {
 	  ) : (Roster.deploymentIds.push(1));
 	}
 	
+	setDeploymentPosition(id, position){
+		//console.log(id, position);
+		this.deploymentCard.forEach((row) => {
+        row.id == id ? (row.positions = position) : row.positions;
+      });
+		
+	}
 	
+	deleteDeploymentRow(id){
+		this.deploymentCard.forEach((row, index) => {
+        id == row.id ? this.deploymentCard.splice(index, 1) : row;
+      });
+	}
+	
+	setCheckBox(id, label){
+		this.deploymentCard.forEach((row, index) => {
+		id != row.id ? row : id == row.id && row[label] == 1 ? row[label] = 0 : row[label] = 1;
+      });
+	}
+	
+	sumIdealHours(){
+		//console.log(this.transactionsPerHour);
+		console.log(this.deploymentCard);
+		const result = {
+					t0: [],
+					t35: [],
+					t45: [],
+					t55: [],
+					t65: [],
+					t75: [],
+					t85: [],
+					t95: [],
+					t105: []
+				};
+		
+		this.deploymentCard.forEach((row)=>{
+			Object.keys(row).forEach((key)=>{	
+				key == 't0' && row[key] > 0 ? result.t0.push(row.positions) :
+				key == 't35' && row[key] > 0 ? result.t35.push(row.positions) :
+				key == 't45' && row[key] > 0 ? result.t45.push(row.positions) :
+				key == 't55' && row[key] > 0 ? result.t55.push(row.positions) :
+				key == 't65' && row[key] > 0 ? result.t65.push(row.positions) :
+				key == 't75' && row[key] > 0 ? result.t75.push(row.positions) :
+				key == 't85' && row[key] > 0 ? result.t85.push(row.positions) :
+				key == 't95' && row[key] > 0 ? result.t95.push(row.positions) :
+			    key == 't105' && row[key] > 0 ? result.t105.push(row.positions) : ''
+				
+			});
+		});
+		
+		const sum = this.deploymentCard.reduce((acc, row)=>{
+			return {
+				t0: acc.t0 + row.t0,
+				t35: acc.t35 + row.t35,
+				t45: acc.t45 + row.t45, 
+				t55: acc.t55 + row.t55, 
+				t65: acc.t65 + row.t65, 
+				t75: acc.t75 + row.t75, 
+				t85: acc.t85 + row.t85, 
+				t95: acc.t95 + row.t95,
+				t105: acc.t105 + row.t105
+			}
+		},{
+			t0: 0,
+			t35: 0,
+			t45: 0,
+			t55: 0,
+			t65: 0,
+			t75: 0,
+			t85: 0,
+			t95: 0,
+			t105: 0
+		});
+		
+		//console.log(sum);
+		//console.log(result);
+		
+		const sumAndResult = {
+			t0: [sum.t0,...result.t0],
+			t35: [sum.t35,...result.t35],
+			t45: [sum.t45,...result.t45],
+			t55: [sum.t55,...result.t55],
+			t65: [sum.t65,...result.t65],
+			t75: [sum.t75,...result.t75],
+			t85: [sum.t85,...result.t85],
+			t95: [sum.t95,...result.t95],
+			t105: [sum.t105,...result.t105],
+		}
+		
+		console.log(sumAndResult);
+		
+		const ideal = this.transactionsPerHour.map((row, index)=>{
+			return {
+				[Object.keys(row)]: 
+				row[Object.keys(row)] < 35 ? sumAndResult.t0 :
+				row[Object.keys(row)] >= 35 && row[Object.keys(row)] < 45 ? sumAndResult.t35 :
+				row[Object.keys(row)] >= 45 && row[Object.keys(row)] < 55 ? sumAndResult.t45 :
+				row[Object.keys(row)] >= 55 && row[Object.keys(row)] < 65 ? sumAndResult.t55 :
+				row[Object.keys(row)] >= 65 && row[Object.keys(row)] < 75 ? sumAndResult.t65 :
+				row[Object.keys(row)] >= 75 && row[Object.keys(row)] < 85 ? sumAndResult.t75 :
+				row[Object.keys(row)] >= 85 && row[Object.keys(row)] < 95 ? sumAndResult.t85 :
+				row[Object.keys(row)] >= 95 && row[Object.keys(row)] < 105 ? sumAndResult.t95 :
+				row[Object.keys(row)] >= 105 ? sum.t105 : 0
+			}
+		});
+		console.log(ideal);
+		//console.log(this.transactionsPerHour);
+		//console.log(UI.StoredPositions);
+		const scheduled = [];
+		
+		UI.StoredPositions.forEach((position)=>{
+			ideal.forEach((time)=>{
+				
+				//console.log(time[Object.keys(time)], Object.keys(time)[0]);
+				
+				time[Object.keys(time)].forEach((item)=>{
+					//console.log(item);
+					item == position ? console.log(`Time at ${position} is ${Object.keys(time)[0]}`) : 'not';
+				});
+			});
+		});
+		
+	}
+
   }
   
   //////////////// END OF CLASS ROSTER /////////////////////
@@ -1248,7 +1353,8 @@ class Store {
 	  //UPDATE THE NEW ROSTER TRSPERHOUR
 	  
 	  UI.newRoster.updateTransactionsPerHour(trsArr);
-		console.log(UI.newRoster);
+		//console.log(UI.newRoster);
+	    UI.newRoster.sumIdealHours();
   });
 	
   
