@@ -315,7 +315,17 @@ class Store {
 	}
 	
 	sumIdealHours(){
-		//console.log(this.transactionsPerHour);
+		//CLEARING TJE UI
+		const table = document.getElementById('open-row');
+		table.querySelectorAll('tr').forEach((el)=>{
+			el.remove();
+		});
+		//END OF CLEARINTHE UI
+		
+		//CLEARING THE OBJECT
+		this.shiftsOpen = [];
+		
+		console.log(this.transactionsPerHour);
 		console.log(this.deploymentCard);
 		const result = {
 					t0: [],
@@ -396,25 +406,141 @@ class Store {
 				row[Object.keys(row)] >= 75 && row[Object.keys(row)] < 85 ? sumAndResult.t75 :
 				row[Object.keys(row)] >= 85 && row[Object.keys(row)] < 95 ? sumAndResult.t85 :
 				row[Object.keys(row)] >= 95 && row[Object.keys(row)] < 105 ? sumAndResult.t95 :
-				row[Object.keys(row)] >= 105 ? sum.t105 : 0
+				row[Object.keys(row)] >= 105 ? sumAndResult.t105 : 0
 			}
 		});
 		console.log(ideal);
 		//console.log(this.transactionsPerHour);
 		//console.log(UI.StoredPositions);
-		const scheduled = [];
-		
+		let times = [];
+		let res = [];
+			
 		UI.StoredPositions.forEach((position)=>{
 			ideal.forEach((time)=>{
-				
 				//console.log(time[Object.keys(time)], Object.keys(time)[0]);
-				
 				time[Object.keys(time)].forEach((item)=>{
 					//console.log(item);
-					item == position ? console.log(`Time at ${position} is ${Object.keys(time)[0]}`) : 'not';
-				});
+					item == position ?
+					times.push({
+						[position]: Object.keys(time)[0]	
+					})
+					/*console.log(`Time at ${position} is ${Object.keys(time)[0]}`)*/ : 'not';
+				});			
 			});
+			
 		});
+		//console.log(times);
+		
+		UI.StoredPositions.forEach((pos)=>{
+			let arr = [];
+			const reduced = times.reduce((acc, crr)=>{
+				//console.log(Object.keys(acc)[0]);
+			pos == Object.keys(crr)[0] ? 
+			arr.push(Object.values(crr)[0])
+			: '';
+			return {
+				[pos]: arr
+			}
+		}, [{[pos]: arr}]);	
+			res.push(reduced);
+			//console.log(reduced);
+			
+		});
+		
+		console.log(res);
+		
+		res.forEach((person)=>{
+			//console.log(Object.values(person)[0].length);
+			let shift = '';
+			const timeOpenSelect = document.getElementById("time-open-select");
+			Object.values(person)[0].length < 9 ?
+				//console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
+				//RUN THE FUNNCTION OF ADDING A SHIFT TO ROSTER
+						(
+						UI.newRoster.setOpenShiftId(),
+						//console.log(Roster.openShiftsIds);  
+					      shift = new Shift(
+					      Math.max(...Roster.openShiftsIds),
+					      "",
+					      Object.keys(person)[0],
+					      Object.values(person)[0][0],
+					      Object.values(person)[0][Object.values(person)[0].length-1],
+					      ""
+					    ),
+					    UI.addShiftToRoster(
+					      [shift],
+					      "open-row",
+					      timeOpenSelect.value,
+					      UI.countHeadOpen,
+					      UI.StoredPositions
+					    ),UI.newRoster.setShiftsOpen(shift),
+						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
+						UI.displayLabourHours(
+                			UI.newRoster.getLabourPerHour(),
+                			'orange',
+                			'labour-hours-open-head')
+			)
+		
+			: Object.values(person)[0].length > 8 ? 
+				//RUN THE FUNCTION 2X
+			    //console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-5]}`,` ${Object.keys(person)[0]} From: ${Object.values(person)[0][5]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
+			(
+			
+			////First
+			
+					UI.newRoster.setOpenShiftId(),
+						//console.log(Roster.openShiftsIds);  
+					      shift = new Shift(
+					      Math.max(...Roster.openShiftsIds),
+					      "",
+					      Object.keys(person)[0],
+					      Object.values(person)[0][0],
+					      Object.values(person)[0][Object.values(person)[0].length-8],
+					      ""
+					    ),
+					    UI.addShiftToRoster(
+					      [shift],
+					      "open-row",
+					      timeOpenSelect.value,
+					      UI.countHeadOpen,
+					      UI.StoredPositions
+					    ),UI.newRoster.setShiftsOpen(shift),
+						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
+						UI.displayLabourHours(
+                			UI.newRoster.getLabourPerHour(),
+                			'orange',
+                			'labour-hours-open-head'),
+				
+			///Second
+			
+					UI.newRoster.setOpenShiftId(),
+						//console.log(Roster.openShiftsIds);  
+					      shift = new Shift(
+					      Math.max(...Roster.openShiftsIds),
+					      "",
+					      Object.keys(person)[0],
+					      Object.values(person)[0][6],
+					      Object.values(person)[0][Object.values(person)[0].length-1],
+					      ""
+					    ),
+					    UI.addShiftToRoster(
+					      [shift],
+					      "open-row",
+					      timeOpenSelect.value,
+					      UI.countHeadOpen,
+					      UI.StoredPositions
+					    ),UI.newRoster.setShiftsOpen(shift),
+						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
+						UI.displayLabourHours(
+                			UI.newRoster.getLabourPerHour(),
+                			'orange',
+                			'labour-hours-open-head')
+			)
+			: ''
+			;
+		});
+		
+		console.log(UI.newRoster);
 		
 	}
 
@@ -1354,6 +1480,7 @@ class Store {
 	  
 	  UI.newRoster.updateTransactionsPerHour(trsArr);
 		//console.log(UI.newRoster);
+	  
 	    UI.newRoster.sumIdealHours();
   });
 	
