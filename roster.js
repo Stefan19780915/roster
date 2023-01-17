@@ -314,6 +314,20 @@ class Store {
       });
 	}
 	
+	convertTime(arrOfTimes){
+		const result = arrOfTimes.map((timeString)=>{
+			let regExTime = /([0-9]?[0-9]):([0-9][0-9])/;
+			let regExTimeArr = regExTime.exec(timeString);
+			let timeHr = regExTimeArr[1] * 3600 * 1000;
+			let timeMin = regExTimeArr[2] * 60 * 1000;
+			let timeMs = timeHr + timeMin;
+			let refTimeMs = 1577833200000;
+			let time = new Date (refTimeMs + timeMs);
+			return time.getHours();
+		});
+		return result;
+	}
+	
 	sumIdealHours(){
 		//CLEARING TJE UI
 		const table = document.getElementById('open-row');
@@ -325,8 +339,8 @@ class Store {
 		//CLEARING THE OBJECT
 		this.shiftsOpen = [];
 		
-		console.log(this.transactionsPerHour);
-		console.log(this.deploymentCard);
+		//console.log(this.transactionsPerHour);
+		//console.log(this.deploymentCard);
 		const result = {
 					t0: [],
 					t35: [],
@@ -393,7 +407,7 @@ class Store {
 			t105: [sum.t105,...result.t105],
 		}
 		
-		console.log(sumAndResult);
+		//console.log(sumAndResult);
 		
 		const ideal = this.transactionsPerHour.map((row, index)=>{
 			return {
@@ -413,8 +427,9 @@ class Store {
 		//console.log(this.transactionsPerHour);
 		//console.log(UI.StoredPositions);
 		let times = [];
-		let res = [];
-			
+		let resReducedTimes = [];
+		
+		//EACH POSITION IS GETTING THE TIMES
 		UI.StoredPositions.forEach((position)=>{
 			ideal.forEach((time)=>{
 				//console.log(time[Object.keys(time)], Object.keys(time)[0]);
@@ -442,18 +457,43 @@ class Store {
 				[pos]: arr
 			}
 		}, [{[pos]: arr}]);	
-			res.push(reduced);
+			resReducedTimes.push(reduced);
 			//console.log(reduced);
 			
 		});
 		
-		console.log(res);
+		console.log(resReducedTimes);
 		
-		res.forEach((person)=>{
+		//SCHEDULING LOGIC - OF REDUCED TIMES BY POSITON
+		resReducedTimes.forEach((person)=>{
 			//console.log(Object.values(person)[0].length);
 			let shift = '';
 			const timeOpenSelect = document.getElementById("time-open-select");
-			Object.values(person)[0].length < 9 ?
+			
+			//GETTING THE START AND END TIMES OF THE PERSON - AND ODD START TIMES
+			//console.log(this.convertTime(Object.values(person)[0]));
+			const personTimes = [];
+			const oddStartTimes = [];
+			for (let x = 0; x < Object.values(person)[0].length; ++x){
+				
+				if(this.convertTime(Object.values(person)[0])[x-1]){
+					this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x-1]+1 ? 
+					personTimes.push(Object.values(person)[0][x]) : oddStartTimes.push(Object.values(person)[0][x]);
+					
+				} else {
+					this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x+1]-1 ? 
+					personTimes.push(Object.values(person)[0][x]) : oddStartTimes.push(Object.values(person)[0][x]);
+					
+				}
+				
+			}
+			
+			//console.log(personTimes);
+			//console.log(oddStartTimes);
+			///// END OF LOGIC START AND END TIMES + ODD TIMES
+ 			
+			//FIRST CONDITION
+			personTimes.length < 9 && personTimes.length ?
 				//console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
 				//RUN THE FUNNCTION OF ADDING A SHIFT TO ROSTER
 						(
@@ -463,8 +503,38 @@ class Store {
 					      Math.max(...Roster.openShiftsIds),
 					      "",
 					      Object.keys(person)[0],
-					      Object.values(person)[0][0],
-					      Object.values(person)[0][Object.values(person)[0].length-1],
+					      personTimes[0],
+					      personTimes[personTimes.length-1],
+					      ""
+					    ),
+					    UI.addShiftToRoster(
+					      [shift],
+					      "open-row",
+					      timeOpenSelect.value,
+					      UI.countHeadOpen,
+					      UI.StoredPositions
+					    ),UI.newRoster.setShiftsOpen(shift),
+						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
+						UI.displayLabourHours(
+                			UI.newRoster.getLabourPerHour(),
+                			'orange',
+                			'labour-hours-open-head'),
+				
+				///FOR THE ODD START TIMES TIMES
+				oddStartTimes.forEach((startTime, index)=>{
+					//ODD START TIME
+					//console.log(startTime);
+					//END TIME MAX + 4 HOURS
+					//console.log(this.convertTime(oddStartTimes)[index] + 1 + ':00');
+					
+					UI.newRoster.setOpenShiftId(),
+						//console.log(Roster.openShiftsIds);  
+					      shift = new Shift(
+					      Math.max(...Roster.openShiftsIds),
+					      "",
+					      Object.keys(person)[0],
+					      startTime,
+					      this.convertTime(oddStartTimes)[index] + 4 + ':00',
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -479,23 +549,26 @@ class Store {
                 			UI.newRoster.getLabourPerHour(),
                 			'orange',
                 			'labour-hours-open-head')
+					
+				})		
+				
 			)
-		
-			: Object.values(person)[0].length > 8 ? 
+			
+			//SECOND CONDITION
+			: personTimes.length > 9 && personTimes.length ? 
 				//RUN THE FUNCTION 2X
 			    //console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-5]}`,` ${Object.keys(person)[0]} From: ${Object.values(person)[0][5]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
 			(
 			
 			////First
-			
 					UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
 					      shift = new Shift(
 					      Math.max(...Roster.openShiftsIds),
 					      "",
 					      Object.keys(person)[0],
-					      Object.values(person)[0][0],
-					      Object.values(person)[0][Object.values(person)[0].length-8],
+					      personTimes[0],
+					      personTimes[personTimes.length-8],
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -512,15 +585,14 @@ class Store {
                 			'labour-hours-open-head'),
 				
 			///Second
-			
 					UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
 					      shift = new Shift(
 					      Math.max(...Roster.openShiftsIds),
 					      "",
 					      Object.keys(person)[0],
-					      Object.values(person)[0][6],
-					      Object.values(person)[0][Object.values(person)[0].length-1],
+					      personTimes[6],
+					      personTimes[personTimes.length-1],
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -536,8 +608,11 @@ class Store {
                 			'orange',
                 			'labour-hours-open-head')
 			)
-			: ''
-			;
+			
+			//ELSE --------
+			: 
+			
+			('');
 		});
 		
 		console.log(UI.newRoster);
@@ -597,10 +672,15 @@ class Store {
       "Cashtill",
       "Packer",
       "Presenter",
-      "Manager SM",
-      "Manager RGM",
-      "Manager ARGM",
-      "Middle Station"
+      "Manager",
+      "Drive Packer",
+      "Drive Order",
+      "Servis",
+	  "Drive PickUp",
+	  "Training",
+	  "Lobby",
+	  "Inventory",
+	  "Wolt"
     ];
 	  
     ////////////////COLOR POSITIONS /////////////////////////////////
@@ -609,10 +689,15 @@ class Store {
       position == "Cashtill" ? (el.style.background = "#eccf1c") : null;
       position == "Packer" ? (el.style.background = "#8ac926") : null;
       position == "Presenter" ? (el.style.background = "#6a4c93") : null;
-      position == "Manager SM" ? (el.style.background = "#f77f00") : null;
-      position == "Manager RGM" ? (el.style.background = "#99582a") : null;
-      position == "Manager ARGM" ? (el.style.background = "#f15bb5") : null;
-      position == "Middle Station" ? (el.style.background = "#1982c4") : null;
+      position == "Manager" ? (el.style.background = "#f77f00") : null;
+      position == "Drive Packer" ? (el.style.background = "#99582a") : null;
+      position == "Drive Order" ? (el.style.background = "#f15bb5") : null;
+      position == "Servis" ? (el.style.background = "#1982c4") : null;
+	  position == "Drive PickUp" ? (el.style.background = "#c419b9") : null;
+	  position == "Training" ? (el.style.background = "#19c4c1") : null;
+	  position == "Lobby" ? (el.style.background = "#19c458") : null;
+	  position == "Inventory" ? (el.style.background = "#191cc4") : null;
+      position == "Wolt" ? (el.style.background = "#19c1c4") : null;
     }
 	
   
