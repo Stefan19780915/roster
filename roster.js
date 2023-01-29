@@ -429,7 +429,7 @@ class Store {
 		let times = [];
 		let resReducedTimes = [];
 		
-		//EACH POSITION IS GETTING THE TIMES
+		//EACH POSITION IS GETTING THE TIMES ----
 		UI.StoredPositions.forEach((position)=>{
 			ideal.forEach((time)=>{
 				//console.log(time[Object.keys(time)], Object.keys(time)[0]);
@@ -466,9 +466,10 @@ class Store {
 		
 		//SCHEDULING LOGIC - OF REDUCED TIMES BY POSITON
 		resReducedTimes.forEach((person)=>{
-			//console.log(Object.values(person)[0].length);
+			//console.log(Object.values(person)[0]);
 			let shift = '';
 			const timeOpenSelect = document.getElementById("time-open-select");
+			console.log(person);
 			
 			//GETTING THE START AND END TIMES OF THE PERSON - AND ODD START TIMES
 			//console.log(this.convertTime(Object.values(person)[0]));
@@ -477,26 +478,28 @@ class Store {
 			for (let x = 0; x < Object.values(person)[0].length; ++x){
 				
 				if(this.convertTime(Object.values(person)[0])[x-1]){
-					this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x-1]+1 ? 
+					this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x-1]+1 || this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x+1]-1 ? 
 					personTimes.push(Object.values(person)[0][x]) : oddStartTimes.push(Object.values(person)[0][x]);
-					
 				} else {
-					this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x+1]-1 ? 
+					this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x+1]-1 || this.convertTime(Object.values(person)[0])[x] == this.convertTime(Object.values(person)[0])[x-1]+1 ? 
 					personTimes.push(Object.values(person)[0][x]) : oddStartTimes.push(Object.values(person)[0][x]);
-					
 				}
 				
 			}
 			
-			//console.log(personTimes);
-			//console.log(oddStartTimes);
+			console.log(personTimes);
+			console.log(oddStartTimes);
 			///// END OF LOGIC START AND END TIMES + ODD TIMES
  			
+	
 			//FIRST CONDITION
 			personTimes.length < 9 && personTimes.length ?
-				//console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
+				
 				//RUN THE FUNNCTION OF ADDING A SHIFT TO ROSTER
 						(
+			
+			console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`),
+			
 						UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
 					      shift = new Shift(
@@ -518,39 +521,7 @@ class Store {
 						UI.displayLabourHours(
                 			UI.newRoster.getLabourPerHour(),
                 			'orange',
-                			'labour-hours-open-head'),
-				
-				///FOR THE ODD START TIMES TIMES
-				oddStartTimes.forEach((startTime, index)=>{
-					//ODD START TIME
-					//console.log(startTime);
-					//END TIME MAX + 4 HOURS
-					//console.log(this.convertTime(oddStartTimes)[index] + 1 + ':00');
-					
-					UI.newRoster.setOpenShiftId(),
-						//console.log(Roster.openShiftsIds);  
-					      shift = new Shift(
-					      Math.max(...Roster.openShiftsIds),
-					      "",
-					      Object.keys(person)[0],
-					      startTime,
-					      this.convertTime(oddStartTimes)[index] + 4 + ':00',
-					      ""
-					    ),
-					    UI.addShiftToRoster(
-					      [shift],
-					      "open-row",
-					      timeOpenSelect.value,
-					      UI.countHeadOpen,
-					      UI.StoredPositions
-					    ),UI.newRoster.setShiftsOpen(shift),
-						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
-						UI.displayLabourHours(
-                			UI.newRoster.getLabourPerHour(),
-                			'orange',
                 			'labour-hours-open-head')
-					
-				})		
 				
 			)
 			
@@ -568,7 +539,7 @@ class Store {
 					      "",
 					      Object.keys(person)[0],
 					      personTimes[0],
-					      personTimes[personTimes.length-8],
+					      this.convertTime(personTimes)[0] + 6 + ':00',
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -613,6 +584,41 @@ class Store {
 			: 
 			
 			('');
+			
+			///FOR THE ODD START TIMES TIMES
+				oddStartTimes.forEach((startTime, index)=>{
+					//ODD START TIME
+					//console.log(startTime);
+					//END TIME MAX + 4 HOURS
+					//console.log(this.convertTime(oddStartTimes)[index] + 1 + ':00');
+					const arr = [startTime];
+					console.log(startTime);
+					UI.newRoster.setOpenShiftId(),
+						//console.log(Roster.openShiftsIds);  
+					      shift = new Shift(
+					      Math.max(...Roster.openShiftsIds),
+					      "",
+					      Object.keys(person)[0],
+					      this.convertTime(arr)-1 + ':00',
+					      this.convertTime(oddStartTimes)[index] + 2 + ':00',
+					      ""
+					    ),
+					    UI.addShiftToRoster(
+					      [shift],
+					      "open-row",
+					      timeOpenSelect.value,
+					      UI.countHeadOpen,
+					      UI.StoredPositions
+					    ),UI.newRoster.setShiftsOpen(shift),
+						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
+						UI.displayLabourHours(
+                			UI.newRoster.getLabourPerHour(),
+                			'orange',
+                			'labour-hours-open-head')
+					
+				});	
+			
+			
 		});
 		
 		console.log(UI.newRoster);
@@ -668,19 +674,20 @@ class Store {
 	static rosters = [];
   
     static StoredPositions = [
-      "Cook",
+      
       "Cashtill",
       "Packer",
       "Presenter",
-      "Manager",
-      "Drive Packer",
+	  "Drive Packer",
       "Drive Order",
-      "Servis",
 	  "Drive PickUp",
-	  "Training",
 	  "Lobby",
-	  "Inventory",
-	  "Wolt"
+	  "Wolt",
+      "Servis",
+	  "Cook",
+      "Manager",
+	  "Training",
+	  "Inventory"
     ];
 	  
     ////////////////COLOR POSITIONS /////////////////////////////////
@@ -722,11 +729,12 @@ class Store {
 		  roster.transactionsPerHour,
 		  roster.deploymentCard
 		  );
-        //console.log(UI.newRoster);
+        
 		  
 		UI.rosterNames(Store.getRosters(), 'roster-template-select', roster.name);
 		UI.trsDays(Store.getTrs(Store.trs), 'day-select', Store.trs[0].Date );
-		  
+		UI.displayTrs(UI.newRoster.transactionsPerHour.map(e => Object.values(e)), "orange", 'trs-per-hour');
+		  //console.log(UI.newRoster);
 		  //LOAD THE OPENTIME HEADS ONLY IF THERE ARE TRS LOADED IN LOCAL STORRAGE HERE
 		  
 		  if(Store.trs.length > 1 ){
@@ -798,7 +806,9 @@ class Store {
           UI.newRoster.timeOpenSelect;
         document.getElementById("time-close-select").value =
           UI.newRoster.timeCloseSelect;
+	  
       });
+		
     }
 	
 	////////////////////// END OF DISPLAY ROSTER ///////////////////////
@@ -1253,7 +1263,7 @@ class Store {
       UI.displayTotalHours(result, el2);
     }
 
-    //TABLE LABOUR HEADER
+    //TABLE LABOUR HOURS HEADER
     static displayLabourHours (arr, color = "orange", el1){
       //console.log(arr);
       let reducedArr = [];
@@ -1270,6 +1280,22 @@ class Store {
       output.unshift(rowHeadEmpty);
       tableHead.innerHTML = output.join("");
     }
+	
+	//DISPLAY TRS
+	
+	static displayTrs (arr, color = "orange", el1){
+      const tableHead = document.getElementById(el1);
+      let output = arr.map((item, index, arr) => {
+        //console.log(arr.length-1); gettin the last array item
+        return `<td class="labour-number ${color}" colspan="${index == arr.length-1 && item < 1 ? '1' : '2'}">${item}</td>`;
+      });
+      const rowHeadEmpty = `<th></th><th class="width"></th><th class="labour-plan">TRS PER HOUR</th><th></th>`;
+      output.unshift(rowHeadEmpty);
+      tableHead.innerHTML = output.join("");
+    }
+	
+	
+	//END OF DISPLAZ TRS
   
     //TIMES FOR SELECT IN DOM
     static addTimeSlots(el) {
@@ -1409,7 +1435,7 @@ class Store {
   //EVENTS ON DOM LOAD
   document.addEventListener("DOMContentLoaded", () => {
     UI.displayRoster();
-	 console.log(UI.newRoster);
+	 //console.log(UI.newRoster);
   });
 	
   // OPEN THE DIALOG FOR DEPLOYMENT CARD /////////////////////////////
@@ -1567,6 +1593,7 @@ class Store {
 		//console.log(UI.newRoster);
 	  
 	    UI.newRoster.sumIdealHours();
+	    UI.displayTrs(UI.newRoster.transactionsPerHour.map(e => Object.values(e)), color = "orange", 'trs-per-hour');
   });
 	
   
@@ -1590,7 +1617,7 @@ class Store {
 		
 		//RENDER NEW IN UI
 		UI.displayRoster(e.target.value);
-		console.log(UI.newRoster);
+		//console.log(UI.newRoster);
 	});
   
   //EVENT SAVE ROSTER BUTTON
