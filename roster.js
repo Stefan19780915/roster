@@ -423,7 +423,7 @@ class Store {
 				row[Object.keys(row)] >= 105 ? sumAndResult.t105 : 0
 			}
 		});
-		console.log(ideal);
+		//console.log(ideal);
 		//console.log(this.transactionsPerHour);
 		//console.log(UI.StoredPositions);
 		let times = [];
@@ -462,14 +462,14 @@ class Store {
 			
 		});
 		
-		console.log(resReducedTimes);
+		//console.log(resReducedTimes);
 		
-		//SCHEDULING LOGIC - OF REDUCED TIMES BY POSITON
+		//SCHEDULING LOGIC - OF REDUCED TIMES BY POSITON - LOOPING THROUGH EACH POSITION
 		resReducedTimes.forEach((person)=>{
 			//console.log(Object.values(person)[0]);
 			let shift = '';
 			const timeOpenSelect = document.getElementById("time-open-select");
-			console.log(person);
+			//console.log(person);
 			
 			//GETTING THE START AND END TIMES OF THE PERSON - AND ODD START TIMES
 			//console.log(this.convertTime(Object.values(person)[0]));
@@ -487,18 +487,18 @@ class Store {
 				
 			}
 			
-			console.log(personTimes);
-			console.log(oddStartTimes);
+			//console.log(personTimes);
+			//console.log(oddStartTimes);
 			///// END OF LOGIC START AND END TIMES + ODD TIMES
  			
 	
-			//FIRST CONDITION
-			personTimes.length < 9 && personTimes.length ?
+			//FIRST CONDITION IF SHIFT LENGHT IS LESS THEN 13 HOURS BUT BIGGER THAN 4
+			personTimes.length <= 13 && personTimes.length && personTimes.length >= 4 ?
 				
 				//RUN THE FUNNCTION OF ADDING A SHIFT TO ROSTER
 						(
 			
-			console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`),
+			//console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`),
 			
 						UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
@@ -526,7 +526,7 @@ class Store {
 			)
 			
 			//SECOND CONDITION
-			: personTimes.length > 9 && personTimes.length ? 
+			: personTimes.length >= 13 && personTimes.length ? 
 				//RUN THE FUNCTION 2X
 			    //console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-5]}`,` ${Object.keys(person)[0]} From: ${Object.values(person)[0][5]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
 			(
@@ -580,8 +580,39 @@ class Store {
                 			'labour-hours-open-head')
 			)
 			
-			//ELSE --------
-			: 
+			//THIRD CONDITION ELSE -------- LESS THAT 3 OR 3 - then schedules and adds 3 hours
+			: personTimes.length <= 3 && personTimes.length ?
+			
+			(
+			
+			UI.newRoster.setOpenShiftId(),
+						//console.log(Roster.openShiftsIds);  
+					      shift = new Shift(
+					      Math.max(...Roster.openShiftsIds),
+					      "",
+					      Object.keys(person)[0],
+					      personTimes[0],
+					      this.convertTime([personTimes[personTimes.length-1]])[0] + 4 + ':00',
+					      ""
+					    ),
+					    UI.addShiftToRoster(
+					      [shift],
+					      "open-row",
+					      timeOpenSelect.value,
+					      UI.countHeadOpen,
+					      UI.StoredPositions
+					    ),UI.newRoster.setShiftsOpen(shift),
+						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
+						UI.displayLabourHours(
+                			UI.newRoster.getLabourPerHour(),
+                			'orange',
+                			'labour-hours-open-head')
+			
+			//EXTENDING THE LAST TIME FROM THE PERSON TIMES
+			//console.log([personTimes[personTimes.length-1]])
+			) :
+		
+			// ELSE .....
 			
 			('');
 			
@@ -592,7 +623,7 @@ class Store {
 					//END TIME MAX + 4 HOURS
 					//console.log(this.convertTime(oddStartTimes)[index] + 1 + ':00');
 					const arr = [startTime];
-					console.log(startTime);
+					//console.log(startTime);
 					UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
 					      shift = new Shift(
@@ -600,7 +631,7 @@ class Store {
 					      "",
 					      Object.keys(person)[0],
 					      this.convertTime(arr)-1 + ':00',
-					      this.convertTime(oddStartTimes)[index] + 2 + ':00',
+					      this.convertTime(oddStartTimes)[index] + 3 + ':00',
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -621,7 +652,7 @@ class Store {
 			
 		});
 		
-		console.log(UI.newRoster);
+		//console.log(UI.newRoster);
 		
 	}
 
@@ -676,7 +707,9 @@ class Store {
     static StoredPositions = [
       
       "Cashtill",
+	  "Cashtill Mid",
       "Packer",
+	  "Packer Mid",
       "Presenter",
 	  "Drive Packer",
       "Drive Order",
@@ -684,8 +717,11 @@ class Store {
 	  "Lobby",
 	  "Wolt",
       "Servis",
+	  "Servis Mid",
 	  "Cook",
+	  "Cook Mid",
       "Manager",
+	  "Manager Mid",
 	  "Training",
 	  "Inventory"
     ];
@@ -693,13 +729,18 @@ class Store {
     ////////////////COLOR POSITIONS /////////////////////////////////
     static colorPosition(position, el) {
       position == "Cook" ? (el.style.background = "#ff595e") : null;
+	  position == "Cook Mid" ? (el.style.background = "#ff595e") : null;
       position == "Cashtill" ? (el.style.background = "#eccf1c") : null;
+	  position == "Cashtill Mid" ? (el.style.background = "#eccf1c") : null;
       position == "Packer" ? (el.style.background = "#8ac926") : null;
+	  position == "Packer Mid" ? (el.style.background = "#8ac926") : null;
       position == "Presenter" ? (el.style.background = "#6a4c93") : null;
       position == "Manager" ? (el.style.background = "#f77f00") : null;
+	  position == "Manager Mid" ? (el.style.background = "#f77f00") : null;
       position == "Drive Packer" ? (el.style.background = "#99582a") : null;
       position == "Drive Order" ? (el.style.background = "#f15bb5") : null;
       position == "Servis" ? (el.style.background = "#1982c4") : null;
+	  position == "Servis Mid" ? (el.style.background = "#1982c4") : null;
 	  position == "Drive PickUp" ? (el.style.background = "#c419b9") : null;
 	  position == "Training" ? (el.style.background = "#19c4c1") : null;
 	  position == "Lobby" ? (el.style.background = "#19c458") : null;
@@ -1087,7 +1128,7 @@ class Store {
                   el.target.value
                 )
               : tableRowElement.parentElement;
-            console.log(UI.newRoster);
+            //console.log(UI.newRoster);
             //CHANGE COLOR--------------------------------------------------------
             const selected = el.currentTarget.querySelectorAll(".selected");
             selected[0]
