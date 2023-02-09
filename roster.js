@@ -425,7 +425,7 @@ class Store {
 			//console.log(row[Object.keys(row)]);
 			return {
 				[Object.keys(row)]: 
-				row[Object.keys(row)] < 15 && row[Object.keys(row)] > 1 ? sumAndResult.t0 :
+				row[Object.keys(row)] < 15 && row[Object.keys(row)] >= 1 ? sumAndResult.t0 :
 				row[Object.keys(row)] >= 15 && row[Object.keys(row)] < 25 ? sumAndResult.t15 :
 				row[Object.keys(row)] >= 25 && row[Object.keys(row)] < 35 ? sumAndResult.t25 :
 				row[Object.keys(row)] >= 35 && row[Object.keys(row)] < 45 ? sumAndResult.t35 :
