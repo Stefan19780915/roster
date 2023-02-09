@@ -328,6 +328,8 @@ class Store {
 		return result;
 	}
 	
+	// AUTO SCHEDULE START HERE
+	
 	sumIdealHours(){
 		//CLEARING TJE UI
 		const table = document.getElementById('open-row');
@@ -343,6 +345,8 @@ class Store {
 		//console.log(this.deploymentCard);
 		const result = {
 					t0: [],
+					t15: [],
+					t25: [],
 					t35: [],
 					t45: [],
 					t55: [],
@@ -356,6 +360,8 @@ class Store {
 		this.deploymentCard.forEach((row)=>{
 			Object.keys(row).forEach((key)=>{	
 				key == 't0' && row[key] > 0 ? result.t0.push(row.positions) :
+				key == 't15' && row[key] > 0 ? result.t15.push(row.positions) :
+				key == 't25' && row[key] > 0 ? result.t25.push(row.positions) :
 				key == 't35' && row[key] > 0 ? result.t35.push(row.positions) :
 				key == 't45' && row[key] > 0 ? result.t45.push(row.positions) :
 				key == 't55' && row[key] > 0 ? result.t55.push(row.positions) :
@@ -371,6 +377,8 @@ class Store {
 		const sum = this.deploymentCard.reduce((acc, row)=>{
 			return {
 				t0: acc.t0 + row.t0,
+				t15: acc.t15 + row.t15,
+				t25: acc.t25 + row.t25,
 				t35: acc.t35 + row.t35,
 				t45: acc.t45 + row.t45, 
 				t55: acc.t55 + row.t55, 
@@ -382,6 +390,8 @@ class Store {
 			}
 		},{
 			t0: 0,
+			t15: 0,
+			t25: 0,
 			t35: 0,
 			t45: 0,
 			t55: 0,
@@ -397,6 +407,8 @@ class Store {
 		
 		const sumAndResult = {
 			t0: [sum.t0,...result.t0],
+			t15: [sum.t15,...result.t15],
+			t25: [sum.t25,...result.t25],
 			t35: [sum.t35,...result.t35],
 			t45: [sum.t45,...result.t45],
 			t55: [sum.t55,...result.t55],
@@ -410,9 +422,12 @@ class Store {
 		//console.log(sumAndResult);
 		
 		const ideal = this.transactionsPerHour.map((row, index)=>{
+			//console.log(row[Object.keys(row)]);
 			return {
 				[Object.keys(row)]: 
-				row[Object.keys(row)] < 35 ? sumAndResult.t0 :
+				row[Object.keys(row)] < 15 && row[Object.keys(row)] > 1 ? sumAndResult.t0 :
+				row[Object.keys(row)] >= 15 && row[Object.keys(row)] < 25 ? sumAndResult.t15 :
+				row[Object.keys(row)] >= 25 && row[Object.keys(row)] < 35 ? sumAndResult.t25 :
 				row[Object.keys(row)] >= 35 && row[Object.keys(row)] < 45 ? sumAndResult.t35 :
 				row[Object.keys(row)] >= 45 && row[Object.keys(row)] < 55 ? sumAndResult.t45 :
 				row[Object.keys(row)] >= 55 && row[Object.keys(row)] < 65 ? sumAndResult.t55 :
@@ -420,11 +435,18 @@ class Store {
 				row[Object.keys(row)] >= 75 && row[Object.keys(row)] < 85 ? sumAndResult.t75 :
 				row[Object.keys(row)] >= 85 && row[Object.keys(row)] < 95 ? sumAndResult.t85 :
 				row[Object.keys(row)] >= 95 && row[Object.keys(row)] < 105 ? sumAndResult.t95 :
-				row[Object.keys(row)] >= 105 ? sumAndResult.t105 : 0
+				row[Object.keys(row)] >= 105 ? sumAndResult.t105 : [0,'']
 			}
 		});
 		//console.log(ideal);
-		//console.log(this.transactionsPerHour);
+		//LAST HOUR - in THE TRS ARRAY
+		//console.log( Object.keys(this.transactionsPerHour[this.transactionsPerHour.length - 1])[0] );
+		// COMPARE LAST HOUR WITH TIME CONVERT
+		//console.log( this.convertTime( [Object.keys(this.transactionsPerHour[this.transactionsPerHour.length - 1])[0]] ) );
+		//LAST HOUR THAT HAS TRS OBJ
+		let lastHourThatHasTRS = this.transactionsPerHour.filter((item)=>{ return item[Object.keys(item)] > 0});
+		//LAST HOUR THAT HAS TRS STRING ----
+		//console.log( Object.keys(lastHourThatHasTRS[lastHourThatHasTRS.length-1])[0] );
 		//console.log(UI.StoredPositions);
 		let times = [];
 		let resReducedTimes = [];
@@ -487,19 +509,20 @@ class Store {
 				
 			}
 			
-			//console.log(personTimes);
-			//console.log(oddStartTimes);
+			console.log(personTimes);
+			console.log(oddStartTimes);
 			///// END OF LOGIC START AND END TIMES + ODD TIMES
- 			
 	
+ 			
+			//console.log(oddStartTimes);
 			//FIRST CONDITION IF SHIFT LENGHT IS LESS THEN 13 HOURS BUT BIGGER THAN 4
-			personTimes.length <= 13 && personTimes.length && personTimes.length >= 4 ?
+			personTimes.length <= 8 && personTimes.length && personTimes.length >= 4 ?
 				
 				//RUN THE FUNNCTION OF ADDING A SHIFT TO ROSTER
 						(
 			
 			//console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`),
-			
+			            //console.log('less than 8 or 8'),
 						UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
 					      shift = new Shift(
@@ -507,7 +530,7 @@ class Store {
 					      "",
 					      Object.keys(person)[0],
 					      personTimes[0],
-					      personTimes[personTimes.length-1],
+					      this.convertTime([personTimes[personTimes.length-1]])[0] + 1  + ':00',
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -526,7 +549,7 @@ class Store {
 			)
 			
 			//SECOND CONDITION
-			: personTimes.length >= 13 && personTimes.length ? 
+			: personTimes.length > 8 && personTimes.length ? 
 				//RUN THE FUNCTION 2X
 			    //console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-5]}`,` ${Object.keys(person)[0]} From: ${Object.values(person)[0][5]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
 			(
@@ -539,7 +562,7 @@ class Store {
 					      "",
 					      Object.keys(person)[0],
 					      personTimes[0],
-					      this.convertTime(personTimes)[0] + 6 + ':00',
+					      this.convertTime(personTimes)[0] + 5 + ':00',
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -562,8 +585,8 @@ class Store {
 					      Math.max(...Roster.openShiftsIds),
 					      "",
 					      Object.keys(person)[0],
-					      personTimes[6],
-					      personTimes[personTimes.length-1],
+					      personTimes[5],
+					      personTimes[personTimes.length-1] == Object.keys(this.transactionsPerHour[this.transactionsPerHour.length - 1])[0] ? this.convertTime([personTimes[personTimes.length-1]])[0] + ':00' : this.convertTime([personTimes[personTimes.length-1]])[0] + 1 + ':00',
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -581,10 +604,11 @@ class Store {
 			)
 			
 			//THIRD CONDITION ELSE -------- LESS THAT 3 OR 3 - then schedules and adds 3 hours
-			: personTimes.length <= 3 && personTimes.length ?
+			: personTimes.length <= 3 && personTimes.length && oddStartTimes.length == 1 ?
 			
 			(
-			
+			//console.log('here third'),
+			//console.log( Object.keys(this.transactionsPerHour[this.transactionsPerHour.length - 1])[0] ),
 			UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
 					      shift = new Shift(
@@ -592,7 +616,11 @@ class Store {
 					      "",
 					      Object.keys(person)[0],
 					      personTimes[0],
-					      this.convertTime([personTimes[personTimes.length-1]])[0] + 4 + ':00',
+					      this.convertTime([personTimes[personTimes.length-1]])[0] + 5 >= this.convertTime( [Object.keys(this.transactionsPerHour[this.transactionsPerHour.length - 1])[0]] ) ?
+						  Object.keys(this.transactionsPerHour[this.transactionsPerHour.length - 1])[0] :
+						  this.convertTime([personTimes[personTimes.length-1]])[0] + 5 > this.convertTime( Object.keys(lastHourThatHasTRS[lastHourThatHasTRS.length-1]) ) ? 
+				          this.convertTime( Object.keys(lastHourThatHasTRS[lastHourThatHasTRS.length-1]) )[0] + 1 + ':00' : this.convertTime([personTimes[personTimes.length-1]])[0] + 5 +  ':00' 
+						,
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -616,7 +644,21 @@ class Store {
 			
 			('');
 			
-			///FOR THE ODD START TIMES TIMES
+			
+			//console.log(oddStartTimes);
+			
+			/// FILTER ODD START TIME IF 2 TIMES NEXT TO EACH OTHER THAN REMOVE THE NEXT ONE ----- OFF OR NOW - NOT REACTING TO ODD TIMES
+			/*
+			oddStartTimes.filter((time, index, arr)=>{
+				//console.log(this.convertTime([time]));
+				this.convertTime([time])[index]+1 && this.convertTime([time])[index]+1 - this.convertTime([time])[index] <= 5 ? arr.splice(index+1, 1) : '';    
+			});
+			*/
+			
+			//console.log(oddStartTimes);
+			
+			///FOR EACH THE ODD START TIMES TIMES --- OFF FOR NOW --- NOT REACTING TO ODD TIMES
+			/*
 				oddStartTimes.forEach((startTime, index)=>{
 					//ODD START TIME
 					//console.log(startTime);
@@ -630,8 +672,8 @@ class Store {
 					      Math.max(...Roster.openShiftsIds),
 					      "",
 					      Object.keys(person)[0],
-					      this.convertTime(arr)-1 + ':00',
-					      this.convertTime(oddStartTimes)[index] + 3 + ':00',
+					      this.convertTime(arr) + ':00',
+					      this.convertTime(oddStartTimes)[index] + 1 + ':00',
 					      ""
 					    ),
 					    UI.addShiftToRoster(
@@ -648,6 +690,35 @@ class Store {
                 			'labour-hours-open-head')
 					
 				});	
+			*/
+			
+			// ONLY FIRT AND LAST ODD START TIME HERE BENG USED NOT LOOPPED OVER ALL ODD TIMES
+			
+			//console.log([oddStartTimes[0]]);
+			//console.log(this.convertTime([oddStartTimes[oddStartTimes.length-1]]));
+			
+		oddStartTimes[0] && oddStartTimes[oddStartTimes.length-1] && oddStartTimes.length > 1 ?	(UI.newRoster.setOpenShiftId(),
+						//console.log(Roster.openShiftsIds);  
+					      shift = new Shift(
+					      Math.max(...Roster.openShiftsIds),
+					      "",
+					      Object.keys(person)[0],
+					      oddStartTimes[0],
+					      this.convertTime([oddStartTimes[oddStartTimes.length-1]])[0] + 1 + ':00',
+					      ""
+					    ),
+					    UI.addShiftToRoster(
+					      [shift],
+					      "open-row",
+					      timeOpenSelect.value,
+					      UI.countHeadOpen,
+					      UI.StoredPositions
+					    ),UI.newRoster.setShiftsOpen(shift),
+						UI.newRoster.updateLabourPerHour(UI.timeSlotsRowSelector(timeOpenSelect.value, UI.countHeadOpen)),
+						UI.displayLabourHours(
+                			UI.newRoster.getLabourPerHour(),
+                			'orange',
+                			'labour-hours-open-head')) : '';
 			
 			
 		});
@@ -679,10 +750,12 @@ class Store {
   //////////// DEPLOYMENT CARD CLASS ///////
   
   class Deployment {
-  	constructor(id, positions, t0, t35, t45, t55, t65, t75, t85, t95, t105){
+  	constructor(id, positions, t0, t15, t25, t35, t45, t55, t65, t75, t85, t95, t105){
 		this.id = id;
 		this.positions = positions;
 		this.t0 = t0;
+		this.t15 = t15;
+		this.t25 = t25;
 		this.t35 = t35;
 		this.t45 = t45;
 		this.t55 = t55;
@@ -1507,11 +1580,11 @@ class Store {
 		const deploymentRow = new Deployment(
 			Math.max(...Roster.deploymentIds),
 			UI.StoredPositions[0],
-			1, 1, 1, 1, 1, 1, 1, 1, 1
+			1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 			);
 		UI.newRoster.setDeploymentRow(deploymentRow);
 		UI.displayDeploymentRow(UI.newRoster,UI.StoredPositions);
-		console.log(UI.newRoster);
+		//console.log(UI.newRoster);
 	})
 	
   // END OF ADD DEPLOYMENT ROW ///
