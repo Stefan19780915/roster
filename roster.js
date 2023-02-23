@@ -553,7 +553,7 @@ class Store {
 				//RUN THE FUNCTION 2X
 			    //console.log(` ${Object.keys(person)[0]} From: ${Object.values(person)[0][0]} -- To ${Object.values(person)[0][Object.values(person)[0].length-5]}`,` ${Object.keys(person)[0]} From: ${Object.values(person)[0][5]} -- To ${Object.values(person)[0][Object.values(person)[0].length-1]}`)
 			(
-			
+			console.log('heree'),
 			////First
 					UI.newRoster.setOpenShiftId(),
 						//console.log(Roster.openShiftsIds);  
